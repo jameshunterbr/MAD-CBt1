@@ -1,0 +1,196 @@
+---
+title: "R, RStudio -- Instalação"
+author: "James Hunter"
+date: "7 de fevereiro de 2017"
+output: beamer_presentation
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Softwares Chaves
+
+  - R - software de base que faz todos os cálculos e programas
+  - RStudio - IDE (Interactive Development Environment) GUI para R
+    - Cheio de recursos para ajudar com R
+    
+## Ajuda com a Instalação
+
+  - Vídeo no canal YouTube 
+
+## Instalação de R
+  - R tem home page no site de CRAN 
+    - http://cran.r-project.org
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/CRAN home 2.png)
+
+## Quem Tem Windows
+
+  - Clique no "Download R for Windows"
+    - Para Mac ou Linux, siga as direções paralelos para esses OS
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/CRAN Windows.png)  
+
+## Windows Base
+
+  - Clique no "Download R 3.3.2 for Windows"
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/CRAN Windows download.png)   
+  
+## O Que Acontece
+
+  - Programa e recursos download como normal
+  - Precisa Instalar como normal para OS
+  - Vai pôr um ícone no Desktop 
+
+## Agora, RStudio
+  
+  - RStudio seria nosso interface com R
+  - Navegue ao site de RStudio (www.rstudio.com/products/rstudio/)
+  
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio home.png)
+
+## Da Tela de Produtos
+
+  - Clique no botão de "Download RStudio Desktop"
+  
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio prod desk.png)  
+
+## Selecione a Versão "Open Source License"
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio down options.png)
+
+## Selecione a versão para seu OS
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio down version.png)
+
+## Instalar RStudio
+
+  - Quando RStudio fica no seu computador, siga o processo para instalar RStudio
+  
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio install combine.png)
+
+----
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/start screen RStudio.png)
+
+## Opening a Markdown Document
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio start 2.png)
+
+## Recursos Importantes de RStudio --- Cheat Sheets
+
+  - RStudio tem um número de "cheat sheets" para ajudar você
+    - Interface
+    - Comandos de R e os pacotes importantes
+  - Pode achar eles na página: https://www.rstudio.com/resources/cheatsheets/
+  - Cheat sheets recomendados para RStudio:
+    - RStudio IDE Cheat Sheet
+    - R Markdown Cheat Sheet
+  - Cheat Sheets para R e os pacotes importantes:
+    - Data Import Cheat Sheet (tidyverse)
+    - Data Transformation Cheat Sheet (tidyverse)
+    - Data Visualization Cheat Sheet (ggplot2)
+
+## O Que É "Markdown"
+
+  >- Uma maneira simplificada para entrar texto, comandos e fazer cálculos e gráficos em R
+  >- Estes slides vem de um documento de Markdown: "Instalacao_R_slides.Rmd"
+  >- "Rmd" é sufixo dos arquivos que combinam texto, comandos de R e gráficos
+  >- Arquivos markdown pode produzir documentos em pdf (como estes slides), doc (Word) ou html (para os browsers)
+  >- Para ver vários exemplos, vá para repositório em GitHub, onde coloquei todos os arquivos. 
+
+## ".R" Arquivos
+
+  >- Um formato simples para os scripts ou programas de R
+  >- Tem o mesmo formato interno que um arquivo ".txt"
+  >- Para download os pacotes que precisa usar, criei um script para automatizar o download dos pacotes que precisamos na primeira parte de MAD-CB
+  
+## Texto de Instalar Pacotes
+```{r pac_install, echo = TRUE, eval=FALSE}
+
+## Programa para automatizar o download dos pacotes
+## necessários para iniciar MAD-CB
+## Author: James Hunter
+## Date: 6/2/17
+## Version: 1.0
+
+pacotes <- c("tidyverse", "boot", "car", "caret", "caTools", 
+             "data.table", "DescTools", "e1071", "ggvis", 
+             "gmodels", "knitr", "lattice", "lubridate", 
+             "nortest", "nycflights13", "outliers", "pROC", 
+             "psych", "RColorBrewer", "Rcpp", "readxl", 
+             "ROCR", "rpart", "rpart.plot", "seqinr", 
+             "shiny", "swirl", "titanic", "yarrr")
+
+install.packages(pacotes)
+
+```
+
+## Como Executar `instalar_pacotes.R`
+
+  - Acerte que tem conexão à Internet
+  - Na aba de 'Files', navegue à pasta com o arquivo
+  - Clique no "More"/"Set as Working Directory"
+  - Clique no arquivo
+    - Vai abrir na área dos arquivos
+  - Coloque a seta (cursor) na linha que começa com `pacotes`
+    - MAC: toque CMD-Return
+    - Windows: toque CTRL-Return
+  - Você colocou em memoria a lista dos pacotes
+  - A seta vai à linha de `install.packages(pacotes)`
+    - CMD-Return ou CTRL-Return
+  - Assiste enquanto ele executa
+    
+## Instalar Pacotes por Comando
+
+  >- A função (comando) para instalar pacotes é: `install.packages()`
+  >- Dentro dos parênteses, coloque o nome de pacote **em aspas**
+  >- Exemplo: `> install.packages("forecast")` ou
+    - `> install.packages("forecast", "foreign")`
+    
+## Tela de Instalação
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/forecast install.png)
+
+## Manutenção dos Pacotes
+
+  - Para manter os pacotes atualizados:
+  - `> update.packages()` -- todos os pacotes ou 
+  - `> update.packages(forecast)`
+  - Em RStudio:
+    –  Tools/Check for Package Updates
+
+## Ajuda para R 
+
+  - Telas excelentes de ajuda para funções acessível através do comando
+    - `help(<palavra chave>)`
+  - Também, `? <palavra chave>` dá acesso às mesmas telas
+  - Se você não tem certeza se ajuda existe para uma palavra, pode procurá-la com o comando:
+    - `?? <palavra chave>`
+  - Aba de Help no RStudio produz a mesma informação
+  
+## Sites e Blogs com Ajuda
+
+  –  https://stat.ethz.ch/mailman/lis1nfo/r-help (site oficial para ajuda)
+  –  http://leg.est.ufpr.br/doku.php/sokware:rbr (User Group do Brasil)
+  –  RBloggers: http://www.r-bloggers.com/
+  –  StackOverflow: http://stackoverflow.com/ (site para perguntas e respostas)
+  –  Togaware (Graham Williams) One-Pagers:http://onepager.togaware.com
+  –  Hadley Wickham’s Advanced R book/site: http://adv-r.had.co.nz
+
+## Google para Ajuda
+
+  - Coloque sua mensagem de erro diretamente em Google; vai ter vários hits
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/error_Google.png)
+
+## Cursos para Reforçar Aprendizagem de R
+
+  - Datacamp
+  - Coursera/Johns Hopkins: serie de cursos do departamento de Bioestatística
+    - Programação em R (R Programming -- Roger Peng)
+  - Coursera/Duke U: Data Analysis and Statistical Inference
+  - edX/HarvardX: Statistics and R for the Life Sciences (1 of 8 courses)
+    - mais avançado
+    
+# Próxima Aula - Operações e Cálculos Iniciais in R
+
