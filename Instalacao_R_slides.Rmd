@@ -24,19 +24,31 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Instalação de R
   - R tem home page no site de CRAN 
     - http://cran.r-project.org
+<<<<<<< HEAD
 ![](/Users/James/Documents/UNIFESP/MAD Course/CRAN home 2.png)
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/CRAN home 2.png)
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Quem Tem Windows
 
   - Clique no "Download R for Windows"
     - Para Mac ou Linux, siga as direções paralelos para esses OS
+<<<<<<< HEAD
 ![](/Users/James/Documents/UNIFESP/MAD Course/CRAN Windows.png)  
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/CRAN Windows.png)  
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Windows Base
 
   - Clique no "Download R 3.3.2 for Windows"
 
+<<<<<<< HEAD
 ![](/Users/James/Documents/UNIFESP/MAD Course/CRAN Windows download.png)   
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/CRAN Windows download.png)   
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
   
 ## O Que Acontece
 
@@ -49,12 +61,17 @@ knitr::opts_chunk$set(echo = FALSE)
   - RStudio seria nosso interface com R
   - Navegue ao site de RStudio (www.rstudio.com/products/rstudio/)
   
+<<<<<<< HEAD
 ![](/Users/James/Documents/UNIFESP/MAD Course/RStudio home.png)
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio home.png)
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Da Tela de Produtos
 
   - Clique no botão de "Download RStudio Desktop"
   
+<<<<<<< HEAD
 ![](/Users/James/Documents/UNIFESP/MAD Course/RStudio prod desk.png)  
 
 ## Selecione a Versão "Open Source License"
@@ -64,11 +81,23 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Selecione a versão para seu OS
 
 ![](/Users/James/Documents/UNIFESP/MAD Course/RStudio down version.png)
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio prod desk.png)  
+
+## Selecione a Versão "Open Source License"
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio down options.png)
+
+## Selecione a versão para seu OS
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio down version.png)
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Instalar RStudio
 
   - Quando RStudio fica no seu computador, siga o processo para instalar RStudio
   
+<<<<<<< HEAD
 ![](/Users/James/Documents/UNIFESP/MAD Course/RStudio install combine.png)
 
 ----
@@ -77,6 +106,16 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Opening a Markdown Document
 
 ![](/Users/James/Documents/UNIFESP/MAD Course/RStudio start 2.png)
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio install combine.png)
+
+----
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/start screen RStudio.png)
+
+## Opening a Markdown Document
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/RStudio start 2.png)
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Recursos Importantes de RStudio --- Cheat Sheets
 
@@ -131,11 +170,19 @@ install.packages(pacotes)
 
 ## 1 -- GitHub Projeto Tela Principal
 
+<<<<<<< HEAD
 ![](/Users/James/Documents/UNIFESP/MAD Course/github main screen.png)
 
 ## 2 -- Escolhe Formato "RAW"
 
 ![](/Users/James/Documents/UNIFESP/MAD Course/get raw.png)
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/github main screen.png)
+
+## 2 -- Escolhe Formato "RAW"
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/get raw.png)
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## 3 -- Salvar o Texto
 
@@ -147,7 +194,11 @@ install.packages(pacotes)
 
 ##
 
+<<<<<<< HEAD
 ![](/Users/James/Documents/UNIFESP/MAD Course/text save.png)
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/text save.png)
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Como Executar `instalar_pacotes.R`
 
@@ -172,8 +223,12 @@ install.packages(pacotes)
     - `> install.packages("forecast", "foreign")`
     
 ## Tela de Instalação
+<<<<<<< HEAD
 
 ![](/Users/James/Documents/UNIFESP/MAD Course/forecast install.png)
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/forecast install.png)
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Manutenção dos Pacotes
 
@@ -195,6 +250,7 @@ install.packages(pacotes)
 ## Sites e Blogs com Ajuda
 
   –  https://stat.ethz.ch/mailman/lis1nfo/r-help (site oficial para ajuda)
+<<<<<<< HEAD
   
   –  http://leg.est.ufpr.br/doku.php/sokware:rbr (User Group do Brasil)
   
@@ -206,12 +262,23 @@ install.packages(pacotes)
   
   –  Hadley Wickham’s Advanced R book/site: http://adv-r.had.co.nz
   
+=======
+  –  http://leg.est.ufpr.br/doku.php/sokware:rbr (User Group do Brasil)
+  –  RBloggers: http://www.r-bloggers.com/
+  –  StackOverflow: http://stackoverflow.com/ (site para perguntas e respostas)
+  –  Togaware (Graham Williams) One-Pagers:http://onepager.togaware.com
+  –  Hadley Wickham’s Advanced R book/site: http://adv-r.had.co.nz
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Google para Ajuda
 
   - Coloque sua mensagem de erro diretamente em Google; vai ter vários hits
+<<<<<<< HEAD
   
 ![](/Users/James/Documents/UNIFESP/MAD Course/error_Google.png)
+=======
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/error_Google.png)
+>>>>>>> 316d544eaa7170e8f984ac30e96198c0c39921f4
 
 ## Cursos para Reforçar Aprendizagem de R
 
