@@ -127,6 +127,28 @@ install.packages(pacotes)
 
 ```
 
+# Como Download `instalar_pacotes.R` 
+
+## 1 -- GitHub Projeto Tela Principal
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/github main screen.png)
+
+## 2 -- Escolhe Formato "RAW"
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/get raw.png)
+
+## 3 -- Salvar o Texto
+
+  - Usando o comando de browser para salvar o arquivo, salvé-lo
+  - Você quer que o sufixo seja ".R" e não ".txt"
+    - Alguns browsers tentam de forçar a escolha de ".txt"
+    - Insiste em ".R"
+  - Escolhe a pasta onde guarda os arquivos desta matéria
+
+##
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/madcbt1/text save.png)
+
 ## Como Executar `instalar_pacotes.R`
 
   - Acerte que tem conexão à Internet
