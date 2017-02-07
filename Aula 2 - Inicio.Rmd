@@ -1,0 +1,148 @@
+---
+title: "Iniciando Nossos Trabalhos"
+author: "James R. Hunter"
+date: "12 de fevereiro de 2017"
+output: beamer_presentation
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+
+****
+
+![](/Users/James/Documents/UNIFESP/MAD Course/course logo.png)
+
+## O Ínicio
+
+  - Dados médicos sobre tratamentos para artrite e inflamação
+  - Com isso, podemos aprender
+    - Como inserir dados nos objetos R
+    - Como manipular esses dados
+    - Gráficos básicos
+    - Resumos descritivos de dados
+    - Funções em R
+    - Loops
+  - Muito deste lição e os dados vêm do site "Software Carpentry"
+    - Agradeço eles
+    
+## Verificar da Pasta
+  
+  - Queremos estar trabalhando na pasta para matéria
+  - Pode usar a função `getwd()` para ver o que é o working directory
+  
+```{r wd}
+getwd()
+```
+
+## Dados para Working Directory
+
+  - Coloque os dados no working directory
+  - Salvé-los da Github para o working directory
+  - Nome de dados: "r-novice-inflammation-data.zip"
+  - No OS, expande o arquivo 'zip' com um dupla-clique
+  - Vai criar uma nova pasta chamada "`data`"
+  - Mude o nome desta pasta para "`artrite_data`"
+  
+## Entre os Dados em Memoria
+
+  - Precisa abrir alguns pacotes para ler e manipular os dados
+  - Uso da função `library()`
+  - Dados são carregados no disco no formato ".csv"
+  - ".csv" ("Comma Separated Values") -- Formato de Excel
+  - A função `read_csv()` faz parte do pacote `readr`
+  - `readr` faz parte do "tidyverse"
+    - Podemos chamar isso e outros carregando o pacote `tidyverse`
+
+## Pacotes Carregados com o Pacote `tidyverse`
+
+```{r tidyv, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+sessionInfo() ## Comando para mostrar o estado do sistema R neste momento
+```
+
+##
+
+```{r tv2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+library(tidyverse)
+```
+
+##
+
+```{r tv3, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+sessionInfo()
+```
+
+## Carregar os Dados em Memoria
+
+```{r loaddata, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+dados <- read_csv(file = "artrite_data/inflammation-01.csv", 
+                  col_names = FALSE)
+
+```
+
+-----
+
+![](/Users/James/Documents/UNIFESP/MAD Course/env with data added.png)
+
+## O Que Significa `Dados`
+
+  - Dando um nome para os dados na planilha
+  - `<-` = Assignment
+  - `<-` $\neq$ = (igual)
+  - `<-` quer dizer que o valor a direta está sendo associado ao nome a esquerda
+  
+## Exemplo Mais Simples
+
+```{r ex_simp, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+## 1ª Versão
+peso <- 55  ## Pessoa pesa 55 kg.
+
+## 2ª Versão
+peso_kg <- 55 ## Mais claro
+
+## Pode Converter à Libra
+(peso_lb <- peso_kg * 2.2)
+peso_lb
+
+```
+
+## Qual Tipo de Dados Temos?
+
+  - Pacientes são linhas
+  - Dias são colunas
+
+```{r tipo, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+class(dados)
+dim(dados)
+```
+
+## Pegar Dados Específicos do Conjunto
+
+```{r specific, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+dados[1, 1]
+dados[20, 20] # valor de linha 20, coluna 20
+dados[1:3, 1:5] # valores dos primeiros 3 pacientes para primeiro 5 dias
+```
+
+## O Que É Um **"Tibble"**?
+
+  - `data.frame` é classe de dados mais comun para conjuntos de dados estatísticais
+    - Deve ser rectangular, i.e., todos as colunas deve ter o mesmo # de linhas
+  - `tibble` é versão mais nova de data.frame
+    - Não muda o tipo de um valor na base original -- tem a ver com "strings" 
+    - Facilita a criação das colunas com a classe de listas (`list`)
+    - Não mexe com os nomes de variáveis (colunas)
+    - Mais eficiente na avaliação das funções (coisa de Inside Baseball)
+  - Consistente com os princípios de tidyverse
+  
+## 
+
+
+
