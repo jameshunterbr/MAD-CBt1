@@ -1,7 +1,7 @@
 ---
 title: "Iniciando Nossos Trabalhos"
-author: "James R. Hunter"
-date: "12 de fevereiro de 2017"
+author: "jameshunter R. Hunter"
+date: "10 de fevereiro de 2017"
 output: beamer_presentation
 theme: "Boadilla"
 colortheme: "whale"
@@ -18,7 +18,12 @@ knitr::knit_hooks$set(mysize = function(before, options, envir) {
 
 ****
 
-![](/Users/James/Documents/UNIFESP/MAD Course/course logo.png)
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+## Setup dos Monitores -- em Casa
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/desktop image.jpg)
+
 
 ## O Ínicio
 
@@ -89,7 +94,18 @@ dados <- read_csv(file = "artrite_data/inflammation-01.csv",
 
 -----
 
-![](/Users/James/Documents/UNIFESP/MAD Course/env with data added.png)
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/env with data added.png)
+
+## A Classe de `dados`? (Usando `str()`)
+
+  - `str()` - função que elabora a estrutura do objeto
+    - Inclusive dos colunas (variáveis)
+    - Mostra a classe de cada elemento
+
+```{r classdadosdados, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+str(dados[, 1:5])
+```
+
 
 ## O Que Significa `Dados`
 
@@ -97,6 +113,7 @@ dados <- read_csv(file = "artrite_data/inflammation-01.csv",
   - `<-` = Assignment
   - `<-` $\neq$ = (igual)
   - `<-` quer dizer que o valor a direta está sendo associado ao nome a esquerda
+    -  <nome do objeto> **<-** <definição do objeto>
   
 ## Exemplo Mais Simples
 
@@ -115,6 +132,7 @@ peso_lb
 
 ## Qual Tipo de Dados Temos?
 
+  - Grau de inflamação de 60 pacientes durante 40 dias recebendo um novo tratamento para artrite
   - Pacientes são linhas
   - Dias são colunas
 
@@ -125,24 +143,323 @@ dim(dados)
 
 ## Pegar Dados Específicos do Conjunto
 
-```{r specific, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+  - Subset por *Índice*
+
+```{r specific, echo = TRUE, mysize=TRUE, size='\\tiny'}
 dados[1, 1]
 dados[20, 20] # valor de linha 20, coluna 20
 dados[1:3, 1:5] # valores dos primeiros 3 pacientes para primeiro 5 dias
 ```
 
+
+## Pode Ver Subsets dos Dados Não-Contiguos?  SIM
+
+  - Índices não precisam começar com 1
+  
+```{r nocontig, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+dados[5:8, 6:9] # valores dos pacientes 5 - 8 para dias 6 até 9
+```
+
+## Usando o ":" para Adicionar um Grupo ("Slice") das Linhas/Colunas
+
+  - ":" num índice, permite que nós estamos chamando um grupo das linhas ou colunas *contiguas*
+  - Também, chamado um "slice"
+  - Pode usar a function `slice()` dentro do pacote `dplyr`
+    - `dplyr::slice(dados, 1:3)` significa selecione as primeiras 3 linhas do objeto `dados`
+    - O dupla ":" acima diz que `slice()` fica dentro do pacote `dplyr`
+
 ## O Que É Um **"Tibble"**?
 
-  - `data.frame` é classe de dados mais comun para conjuntos de dados estatísticais
-    - Deve ser rectangular, i.e., todos as colunas deve ter o mesmo # de linhas
-  - `tibble` é versão mais nova de data.frame
+  - `data.frame` é classe de dados mais comum para conjuntos de dados estatísticos
+    - Deve ser retangular, i.e., todos as colunas deve ter o mesmo # de linhas
+  - `tibble` é a versão mais nova do data.frame
     - Não muda o tipo de um valor na base original -- tem a ver com "strings" 
     - Facilita a criação das colunas com a classe de listas (`list`)
     - Não mexe com os nomes de variáveis (colunas)
     - Mais eficiente na avaliação das funções (coisa de Inside Baseball)
   - Consistente com os princípios de tidyverse
   
+## Colocando Nomes nas Colunas e nos Pacientes 
+
+  - Nomes "X1", "X2", etc. não explicam nada
+  - Sabemos que as variáveis são dias e que as linhas são pacientes
+  - Vamos criar estes nomes
+  - Passo 1: criar um vetor (seqüência dos valores) dos dias
+  - Passo 2: criar um vetor dos Pacientes
+    - Esses 2 são "strings", ou, em R, vetores de classe "*character*"
+  - Passo 3: Usar "colnames()" para colocar os nomes de variáveis no lugar
+  - Passo 4: Aumentar o vetor dos Pacientes ao conjunto
+  
 ## 
 
+```{r nomes, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+## vetor dos dias
+dias <- c(paste0("dia", 1:ncol(dados)))
+
+## vetor dos pacientes
+pacientes <- c(paste0("pac", 1:nrow(dados)))
+
+## Colocar os nomes nas variáveis
+colnames(dados) <- dias
+
+## Colocar os IDs dos pacientes na base
+dados <- bind_cols(tibble(pacientes), dados)
+```
+
+## O Resultado
+
+```{r resultado, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+dados[1:6, 1:8]
+```
+
+## Classe `int` Não Serve para os Cálculos
+
+  
+  - As variáveis dos dias (int) não serve para cálculos de muitos parâmetros estatísticos
+    - Mean não faz sentido com números inteiros
+    - Precisa as casas decimais
+
+## Formula para Um Mean
+
+$$\mu = \frac{\sum_{i=1}^{n}x_{i}}{n}$$ 
+
+  - Quando dividimos por $n$ (número de valores), precisa números decimais, não inteiros
+  - Mas, agora temos `int`, não `num` 
+  - Precisamos forçar ("coerce") as variáveis para ser números decimais 
+    - "numeric" em R
+  - Comando para forçar conversão dos valores em R: "`as.<tipo de objeto>`"
+    - Nós queremos usar `as.numeric`
+
+## Aplicando `as.numeric` a Uma Coluna Única
+
+  - `dia1` como exemplo
+  - N.B. `unlist` necessário para razões internas de como R trata tibbles e data.frames
+  - Veremos uma alternativa preferida que não precisa `unlist`
+  
+```{r numunica, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+dados[, 'dia1'] <- as.numeric(unlist(dados[, 'dia1']))
+str(dados[, 'dia1'])
+```
+
+## Índice Mais Eficiente - Índice por Nome
+
+  - As variáveis têm nomes
+  - Aproveitar desses nomes com a indexação com **`$`** e o nome da variável
+  - Para `dia1`: `dados$dia1`
+ 
+ ----
+ 
+ 
+```{r exdia1, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+str(dados$dia1)
+## Retornar os IDs dos primeiros 10 pacientes
+dados$pacientes[1:10] # Pode combinar os nomes das variáveis com
+                      # índices númericos para as linhas/os casos
+```
+
+## Como Revisar Todos as 40 Variáveis dos Dias?
+
+  - Nossa tarefa é converter *todas* as 40 variáveis a classe "numeric"
+  - Pode fazer um "loop", uma ferramenta de programação para repetir algo múltiplas vezes
+  - Loops -- não muito eficiente
+  - Alternativa melhor: Use uma versão da função `dplyr::mutate`
+  - `dplyr` pacote chave do manuseio dos dados do tidyverse
+    - `mutate` cria novas variáveis ou muda variáveis existentes
+
+## Novo Símbolo -- O "Pipe" ( %>% )
+
+  - Funções no tidyverse podem ser ligados dentro de um comando usando ` %>% `
+  - Quando usa o Pipe, o 1º argumento do comando depois ` %>% ` usa o resultado do comando anterior
+  - Segue um exemplo
+  
+## Aplicar `as.numeric` às Variáveis de Dia
+
+```{r appdia, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+
+dados <- dados %>% mutate_at(vars(dia1:dia40), funs(as.numeric))
+str(dados[, 2:6])
+```
+
+## Resumo de Comandos e Funções de Manuseio dos Dados
+
+  - getwd()/setwd()             
+  - library()                   
+  - readr::read_csv()         
+  - tidyverse                 
+  - sessionInfo()              
+  - str()                      
+  - <-                          
+  - class()
 
 
+## Resumo -- 2
+
+  - dim()
+  - dplyr::slice()
+  - data.frame/tibble
+  - paste()/paste0()
+  - dplyr::bind_cols()
+  - as.numeric()
+  - $
+  - %>%
+  - unlist()
+
+# Estatística Começa
+
+## Vamos Começar Descrever os Dados 
+
+  - Vamos ver o que é o máximo grau de inflamação de Paciente 1 e a média (mean) durante os 40 dias
+  - Novas funções: `max()` e `mean()`
+  - Fazer subset dos dados com somente as variáveis do dia, sem o ID
+  - Novo comando de `dplyr` -- select() -- selecione colunas/variáveis para o subset
+
+```{r maxmean, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+dadosDia <- dados %>% select(-pacientes) 
+## "-" em selecionar quer dizer omitir variável
+
+## Create variable/vector for Paciente 1
+pac1 <- dadosDia %>% slice(1) %>% unlist()
+max(pac1)
+mean(pac1)
+
+```
+
+# Nosso Primeiro Resultado Estatístico
+
+## Que Mais Que Nós Podemos Tirar desses Dados?
+
+  - Qual é a relação entre Paciente 1 e os Outros
+  - Quão consistente é esse média? Tem muito variançia?
+    - Ou, `r mean(pac1)` é um resumo bom de estado de inflamação?
+
+## Evolução de Grau de Inflamação
+
+  - Calcular a média para todos os dias usando todos os pacientes
+  - É um resumo (summary) dos resultados
+  - Uso de `summarize()` e `summarize_all()` de `dplyr`
+  - Com `summarize_all()`, so precisa dar o nome de função que quer usar como argumento
+ 
+ ![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/summarise funct.png) 
+  
+ ****
+ 
+ 
+```{r summ1, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+meanDia <- dadosDia %>% summarize_all(mean)
+unlist(meanDia)
+```
+
+## Gráfico BÁSICO das Médias por Dia - Comando
+
+```{r gr1, eval = FALSE, echo = TRUE}
+plot(unlist(meanDia), main = "Inflamação Média por Dia", 
+     ylab = "Média de Inflamação", xlab = "Dia")
+```
+
+## Gráfico BÁSICO das Médias por Dia
+
+```{r}
+plot(unlist(meanDia), main = "Inflamação Média por Dia", ylab = "Média de Inflamação", xlab = "Dia")
+```
+
+## Agora, Sabemos Mais sobre Nossos Dados
+
+  >- Inflamação aumenta até dia 20 e depois diminua até 0
+  >- Aumento e descida parecem de ser quase linear (i.e. em linhas retas)
+    - Este é uma idéia que vamos explorar um pouco para frente
+    - Quer dizer que não tem muito variância através dos pacientes
+  
+## Perspectiva de Pacientes
+
+  >- Vale a pena calcular a média de inflamação para cada paciente?
+    - Sim ou Não? Por quê?
+  >- Para mim, não.
+  >- Mas, gostaria de ver a dispersão de inflamação para cada paciente
+      - Tentar um gráfico como o último primeiro
+      
+## Gráfico de Paciente 1
+
+```{r g2, mysize=TRUE, size='\\scriptsize'}
+plot(pac1, main = "Plot da Inflamação de Paciente 1", 
+        ylab = "Grau de Inflamação", xlab = "Dia")
+```
+
+## Resultado Não Muito Claro
+
+  - Sei que existe dispersão entre 0 e acima de 15
+  - Mas, perceber uma tendência é difícil
+  - Boxplot é um gráfico que organiza esse informação bem
+  
+## Boxplot de Inflamação do Paciente 1
+
+```{r g2form, echo = TRUE, eval = FALSE, mysize=TRUE, size='\\scriptsize'}
+boxplot(pac1, main = "Boxplot da Inflamação de Paciente 1", 
+        ylab = "Grau de Inflamação")
+```
+
+----
+
+```{r g2graf, echo = FALSE, eval = TRUE, mysize=TRUE, size='\\scriptsize'}
+boxplot(pac1, main = "Boxplot da Inflamação de Paciente 1", 
+        ylab = "Grau de Inflamação")
+```
+
+# O Que Pode Entender deste Gráfico, Agora?
+
+## Mais uma Perspectiva sobre um Conjunto de Dados -- Resumo de 5 Números
+
+  - em R, tem na função `summary()`
+  - Mostra em ordem:
+    - Valor mínimo 
+    - Valor de 25º percentil (1º quartil)
+    - Valor no meio de todos os valores (Mediana)
+    - Valor de 75º percentil (3º quartil)
+    - Valor máximo
+  - `summary` aumenta a média para a lista
+  - `IQR` = diferença entre o 3º quartil e o 1º quartil
+    - $IQR = Q_3 - Q_1$
+    - IQR -- "Interquartile Range"
+  
+## `summary` e `IQR` de Paciente 1
+
+```{r summpac1, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+summary(pac1)
+IQR(pac1)
+
+```
+
+## Entendendo o Boxplot Melhor
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/bplot_pac1.png) 
+
+## Resumo das Medidas e Funções Estatísticas Que Usamos
+
+  - max()/min()
+  - mean()
+  - select()
+  - plot(x, main = , xlab = , ylab = )
+  - boxplot()
+  - summary()
+  - IQR()
+  
+## Deixei Fora uma Medida Descritiva Super Importante
+
+  - Desvio padrão (standard deviation, sd, ou $sigma$) merece mais foco
+    - Semana que vem
+  - $sigma$ mede a dispersão dos dados em volta da média e forma um dos paramétros da distribuição mais conhecida em estatística --- a Gaussiana ou Normal
+  
+## Hoje, Fizemos Muito
+
+  - Começou de 0
+  - Estudamos como preparar dados para análise
+  - Fizemos vários exercícios de manuseio dos dados ("data wrangling")
+  - Começamos de fazer análise descritivo de estatística com nossos dados
+  - Objectivo da aula: Mostre um pouco de tudo
+    - Semana que vem: mais foco
+    - Terça na teoria de estatística e probabilidade
+    - Sexta nas ferramentas de R e RStudio para manipulação e análise
+    
+## 2 Artigos para Ler
+  - *Can we predict flu deaths with Machine Learning and R?* no Github
+  - *Code Alert*, Nature, Vol. 541, 26/1/17, <doi: 10.1038/nj7638-563a>
+  - Vamos conversar na terça sobre eles
+  
