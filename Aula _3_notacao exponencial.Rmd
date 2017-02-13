@@ -1,0 +1,65 @@
+---
+title: "Aula 3 - Notação Exponencial"
+author: "James R. Hunter"
+date: "14 de fevereiro de 2017"
+output: beamer_presentation
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+****
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+## O Que É Notação Exponencial?
+
+  - Uma maneira para escrever números muitos grandes ou muitos pequenos com eficiência
+    - Simplificar a leitura e a manipulação
+    - Tudo mundo tem dificuldades inicialmente com eles
+  - Utiliza os poderes de 10
+  - Exemplo:
+    - O que é o número 1,000,000,000 em palavras (1 bilhão)
+    - 1.00E+09 (1 bilhão)
+  - Outro Exemplo:
+    - O que é -0.00000087830
+    - -8.783E-07
+  - Assim, não precisa contar todos os zeros (0's)
+  
+## 
+
+  - Todos os expoentes são poderes de 10
+  - Equivalent to -0.00000087830
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/mant_ord.png)
+
+## Número Muito Mais Difícil
+
+  - Massa de um elétron
+    - 9.10938291 E -31 kg
+    - 9.10938291 x $10^{31}$ kg
+    - 0.00000000000000000000000000000091093829100 kg
+    
+## Aparece freqüentemente nos softwares
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/expon_ex.png)
+
+## Chave para Usar 
+
+  - **Ponto decimal deslizante**
+  - 4 = 4e00 (caso base)
+  - Para escrever 400 (4 x 100 ou 4 x 10$^4$)
+    - Deslize o ponto 2 casa para a direta
+    - 4e02
+  - Para escrever 0.04 (4% ou 4 x 0.01 ou 4 x 10$^{-2}$)
+    - Deslize o ponto 2 casa para a esquerda
+    - 4e-02
+    
+
+

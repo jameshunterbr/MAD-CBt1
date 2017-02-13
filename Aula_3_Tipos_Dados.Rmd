@@ -1,0 +1,89 @@
+---
+output: beamer_presentation
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+# Tipos de Dados
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+## Tipos de Dados
+
+  - Categórico v. Numérico
+    - Categórico - qualitativo; texto; "strings"
+    - Numérico - quantitativo; números em que você operar
+  - Exemplos de categórico
+    - Pac1, New York, doente, AZT, 01416-000
+  - Podemos contar valores categóricos
+  - Podemos usar operações matemáticas sobre numéricos
+  - Lógico: Valores -- TRUE ou FALSE
+    - Ajuda de fazer subsets dos dados
+
+## Subtipos de Numéricos - 1
+
+  - Ordenais
+    - A ordem é a coisa significativa
+    - Não o grau de separação entre os números
+    - Exemplo: Escala de números: "Ruim", "Média", "Bom"
+    - Sabemos que Média é melhor que Ruim, mas não quanto melhor
+    - Comum em sondagens de atitudes; não em pesquisa experimental
+    
+## Subtipos de Numéricos - 2
+
+  - Intervalar
+    - 1, 2, 3
+    - Sabemos que 2 é 1 a mais que 1 e que 3 é 1 a mais que 2
+    - Intervalo é fixo
+    - Pode fazer adição e subtração
+  - Proporcional
+    - Tem na escala um zero conhecido
+    - Faz que as proporções de números ficam fixos
+    - Pode fazer multiplicação e divisão dos números
+
+## Exemplo de Intervalar e Proporcional -- Temperatura
+
+  >- Escala de temperatura Celsius -- Proporcional ou Intervalar?
+    - 40º Celsius dobro o calor de 20º??
+  >- NÃO - 40º não é o dobro
+    - Falta de um ponto zero fixo
+  >- Temperatura Kelvin é proporcional
+    - Oº K é um valor absoluto 
+    - 40º K é dobro do calor que 20º K
+
+## Exemplo 2 - Dados de Pressão Arterial
+
+  - Um grupo de mulheres participam num estudo cardiológico
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/maria_batimento.png)  
+
+## Qual tipo de variável é "Name"?
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/maria_batimento.png)  
+
+## Qual tipo de variável é "Week"?
+  
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/maria_batimento.png)  
+
+## Qual tipo de variável é HeartRate?
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/maria_batimento.png)  
+  - Entre Week 1 e Week 2, o Heartrate de Maria aumentou 1.29%
+  
+## Outra Classificação de Dados Quantitativos
+
+  - Números Discretos
+    - O que acontece quando você conta dados
+    - Só tem os valores indicados mas sem todos os possíveis valores intermediários
+  - Números Contínuos
+    - Escala contínuo que contem todos os valores entre um número inteiro e o próximo
+    - Pode usar todos as operações aritméticas 
+  

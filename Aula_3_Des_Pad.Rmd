@@ -1,0 +1,216 @@
+---
+output: beamer_presentation
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+# Desvio Padrão e Variância
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+## Medidas de Tendência Central e Dispersão Apropriadas
+
+  - As duas são *estatísticas* (para amostras) ou *paramêtros* (para populações)
+  - Devem ser apropriadas aos tipos de dados elas descrevem
+  - Ex: Média de uma variável não faz sentido
+  
+```{r ex_data, echo = FALSE}
+
+ano <- (2001:2009) 
+n <- c(2196, 21217, 17017, 20366, 24753, 23480, 25354, 25347, 26507)
+cd4n <- tibble::as_tibble(cbind(ano, n))
+
+```
+
+## Exemplo: Número de Testes de Células CD4+ T em 2001 - 2009
+
+```{r prcd4}
+cd4n
+```
+
+## Resumo (Summary) das Duas Variáveis - 1
+
+```{r res1, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+summary(cd4n)
+```
+
+## Resumo de `n` Usando Pacote `DescTools` 
+
+```{r res2, echo = TRUE, mysize=TRUE, size='\\tiny'}
+library(DescTools)
+options(scipen = 1000)
+Desc(cd4n$n, plotit = FALSE)
+```
+
+## O Que Quer Dizer uma Média
+
+  - Média suficiente para descrever uma distribuição??
+  - Em média, esses duas pessoas parecem iguais?????
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/Twin Brad Pitt.jpg)
+
+## Uma Definição de Uma Média
+
+> Se você tem sua cabeça no congelador e seus pés no forno, em média, você sente confortável. Né?
+
+  - Precisa cuidar de que quer dizer com uma média!
+
+## Medindo Dispersão com Desvio da Média
+
+```{r simpex, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+suppressMessages(library(tidyverse))
+dados1 <- tibble(x = c(1, 2, 3, 4, 5))
+dados1
+mean(dados1$x)
+```
+
+## Distância de Cada Ponto da Média
+
+  - $(x_{i}-\bar{x})$ : diferença entre cada valor $i=1:5$ e a média ($\bar{x}$)
+```{r diffmean, echo = TRUE, mysize=TRUE, size='\\tiny'}
+dev = dados1$x - mean(dados1$x)
+(dados1 <- bind_cols(dados1, tibble(dev)))
+sum(dados1$dev)
+```
+
+## Podemos Fazer Algo Útil dessa Tabela de Distância
+
+  - Truque: Fazer o quadrado: $(x_{i}-\bar{x})^{2}$
+```{r diffsq, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+(dados1 <- bind_cols(dados1, tibble(devsq = dados1$dev^2)))
+sum(dados1$devsq)
+```
+
+## Quadrado de Desvio Tem 2 Efeitos
+
+1. Elimina os negativos
+    - Negativos e positivos não podem cancelar um do outro
+2. Aumenta desvios grandes mais que os pequenos
+      - Dar para eles um peso maior
+      
+##
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/deviation.png)
+
+## Desvio Padrão/Standard Deviation
+
+  - Formula -- População
+  
+  $$\sigma=\sqrt{\frac{\sum(x_{i}-\mu)^{2}}{n}}$$
+  - Formula -- Amostra
+  
+  $$s=\sqrt{\frac{\sum(x_{i}-\bar{x})^{2}}{(n-1)}}$$
+ 
+  - O Que é diferente entre as duas?????? 
+
+## Variância - Desvio Padrão ao Quadrado
+
+  - Duas formulas paralelas a Desvio Padrão
+  - Aqui -- população
+  
+$$\sigma^{2}=\frac{\sum(x_{i}-\mu)^{2}}{n}$$
+
+  - Esse formula parece parecido com uma outra que conhece
+  - Pode ver ele como a **média** dos desvios ao quadrado
+  
+## O Que É Aquele `(n-1)`?
+
+  - Criou disputas desde o seculo 18
+  - Porque devemos dividir os desvios por um número menor?
+  - O que é o efeito no dp deste divisão por (n - 1)?
+  - Se n = 10, (n - 1) = 9, ou 10% menor
+  - Se n = 1000, (n - 1) = 999, ou 0.1% menor
+  - Pergunta prática:
+    - Vale a pena reduzir n para (n - 1)?
+    
+## Graus de Liberdade (Degrees of Freedom)
+
+  - A redução tem ligação ao conceito de **"graus de liberdade"**
+    - Conceito que também usamos em relação a distribuições formais
+    - Ex: t, F, $\chi^{2}$, Normal
+  - Em nosso `dados`, podemos escolher o valor de todos exceto 1 livremente (n - 1)
+    - Sem mudar a média e o desvio padrão
+  - MAS, se escolhemos o último valor e mudá-lo
+    - Média e desvio padrão mudam
+    
+## Tratamento de Graus de Liberdade nas Amostras
+
+  - Assim, não podemos escolher o valor de último número (nº) livremente 
+    - O valor de já determinada média e do desvio padrão mudariam também
+  - $\therefore$ precisamos tirar 1 de denominador para as amostras
+  - Eu concordo, mas outros não
+    - Eles acham $n$ é suficiente
+    
+## Médias, Medianas e Skewness
+
+  - Um conjunto de dados um pouco diferente
+```{r dad2, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+(dados2 <- tibble(x = c(1, 2, 3, 4, 50)))
+```
+
+  - 50 - outlier
+  
+----
+
+```{r dad2desc, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+Desc(dados2$x, plotit = FALSE)
+```
+
+----
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/ds2 outlier.png)
+
+
+----
+
+  - Agora, média e desvio padrão não muito úteis
+    - Muito sensíveis aos valores do outlier
+    - Semelhante às distribuições de renda ou poder econômico
+    - Distribuição é altamente distorcida "skewed"
+    
+## Stephen Jay Gould e Estatística
+
+  - Ensaio: "The Median Isn't the Message"
+  - Sofreu de um câncer cujo tempo de sobrevivência mediana foi 8 meses
+  - Ele sobreviveu mais 20 anos
+    - Ele morreu de um outro câncer não relacionado
+    
+## Medidas Robustas
+
+  - Robusto: insensível a outliers; pode lidar bem com skewness
+  - Não-robusto: sensível a outliers; utilidade cai com skewness
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/robuststat.png)  
+
+## Última Demonstração Disso - O Quarteto de Anscombe
+
+  - Conjunto de 4 distribuições
+    - Todos os primeiros 3 têm os mesmos valores `x`
+    - Todos têm a mesma média e desvio padrão
+    - São totalmente diferentes
+    
+## As Distribuições
+
+```{r ansc, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+anscombe
+```
+
+## As Médias e os Desvios Padrões
+
+```{r ascstat, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+ansres <- anscombe %>% summarize_all(funs(mean, sd))
+(round(ansres, 2))
+```
+
+## Os Gráficos de Distribuição
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/anscombe graph.png)
+
+## O Que Anscombe Quer Dizer
+
+  - Não aceita as estatísticas que os programas produzem
+  - Visualizar os dados com gráficos
+  - Pense!
