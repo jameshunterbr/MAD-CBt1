@@ -1,0 +1,282 @@
+---
+output: beamer_presentation
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/James/Documents/UNIFESP/MAD Course/course logo.png)
+
+# Preparar Dados - Tidyverse
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+# Preparar Dados para a Análise
+
+## Coleção dos Dados
+
+  - Coletar os dados numa forma organizada do início
+  - Quais tipos de variáveis você quer
+  - Quais tipos de números eles são?
+    - Categórico/Numérico?
+  - Fonte de dados?
+    - Sondagens de opinião
+    - Bases de dados existentes
+    - Dados pessoais
+    - Maquina (Sequenciador, PCR, etc.)
+  
+## Onde Gravar os Dados
+
+  - Mais fácil: Excel ou equivalente
+  - Software de base de dados (SQL, outro)
+
+## Formato para Gravar os Dados
+  
+  - Formato "wide"
+    - Cada linha é uma observação completa 
+    - Variáveis ficam nas colunas
+    - De preferência, 1ª coluna é um identificador único
+      - Um ID que liga o fonte de observações através de um serie de tabelas
+      - Ex: RENAGENO: Patient ID
+  - Formato "wide" facilita transferência dos dados da planilha a um software de análise
+  
+## 
+![](/Users/James/Documents/UNIFESP/MAD Course/typicalwideformat.png)
+
+
+
+## Pontos Chaves
+
+  - Toda linha --- **observação**
+  - Toda coluna --- **variável**
+  
+## Um Exemplo Não Tão Bom
+![](/Users/James/Documents/UNIFESP/MAD Course/bad_planilha.png)
+
+## E Essa Planilha
+![](/Users/James/Documents/UNIFESP/MAD Course/bad_plan2.png)
+
+## Resumo -- Coleção de Dados/Gravação
+
+  - Objetivo -- preparar os dados para análise
+    - Não publicação ou divulgação
+    - Ênfase -- fazer os dados compreensíveis para o software analítico
+  - Planilha com Dados Precisa
+    - Dicionário dos Dados
+    - Listagem de todas as variáveis, significação, e códigos usados
+    - Você não vai lembrar os códigos depois de um ano sem um "cheat sheet"
+  - **SEJA PRECISO; NÃO CHUTE!**
+    - A vida e saúde das pessoas podem depender em seus resultados
+    - Arredondar números nesta fase não permitido
+  - "NA" é o código certo para "Não tenho este número"
+    - Não 0 (zero) -- Zero é um número que quer dizer algo especifico
+
+## Exemplo de Uma Planilha Razoável
+![](/Users/James/Documents/UNIFESP/MAD Course/plan_excel.png)
+
+## Dicionário dos Dados
+![](/Users/James/Documents/UNIFESP/MAD Course/data_dic.png)
+
+## Nossos Dados "Tidy"?
+
+  - Variáveis em colunas; Observações (pacientes) em linhas (OK)
+  - Podemos trabalhar com esses dados
+
+# Organização de Dados - "Tidy Data"
+
+##  "Tidy Data" = Dados Organizados
+
+  - Dados seguem um formato consistente
+  - Um mapeamento da significação do conjunto à estrutura dele
+  - Facilitar a localização dos elementos do conjunto
+  - Facilitar o cálculo de estatísticas e construção dos gráficos
+  - Facilitar a percepção das relações entre variáveis
+  
+## Definição de 'Tidy Data' de Hadley Wickham
+
+  > A dataset is a collection of values, usually either **numbers** (if quantitative) or **strings** (if qualitative). Values are organised in two ways. **Every value belongs to a variable and an observation.** A variable contains all values that measure the same underlying attribute (like height, temperature, duration) across units. An observation contains all values measured on the same unit (like a person, or a day, or a race) across attributes.
+  
+Wickham, Hadley. 2014. “Tidy Data.” Journal of Statistical Software Volume 59 (Issue 10). https://www.jstatsoft.org/index.php/jss/article/view/v059i10/v59i10.pdf.
+
+
+## 3 Características de Tidy Data
+
+  1. Cada variável fica numa coluna
+  2. Cada observação fica numa linha
+  3. Cada tipo de unidade observacional compõe uma tabela.
+![Tidy Data](/Users/James/Documents/UNIFESP/MAD Course/tidy_data_diagram.png)   
+
+## Por Esta Definição, Nossos Dados Tidy?
+
+  - Eles combinam vários tipos de dados no mesmo conjunto
+ ![](/Users/James/Documents/UNIFESP/MAD Course/plan_excel.png)
+  - Algumas variáveis são informações demográficas dos pacientes
+    - `idade`, `sexo`, `cidnasc`
+  - Outras contam resultados quantitativos dos testes
+    - `copies_cv`, `contagem_cd4`, `contagem_cd8`
+  - O que unificam os 2 tipos é o `codepac` -- o ID do paciente
+
+# Podemos fazer o trabalho de separar esses tipos de dados em R
+
+## Passo 1 -- Chamar os Pacotes Que Usaremos
+
+```{r loadmods, echo = TRUE}
+suppressMessages(library(tidyverse))
+library(DescTools)
+
+```
+
+## Passo 2 -- Carregar os Dados e Olhar Neles
+
+```{r loaddata, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+dados <- read_csv("pac_demo.csv")
+```
+
+##
+```{r glimpsedados, echo = TRUE, , mysize=TRUE, size='\\footnotesize'}
+tibble::glimpse(dados)
+```
+
+## Passo 3 -- Fazer o Conjunto Realmente "Tidy" por Subsets
+
+  - Subsetting por `dplyr::select`
+  
+    - Criar um subset só com os dados demográficos -- `demog`
+    - Criar um outro subset só com os dados de testes -- `testes`
+    - O conjunto mestre fica o mesmo. 
+    - Sempre temos isso para referência e criação de novos subsets
+    
+##
+ ![](/Users/James/Documents/UNIFESP/MAD Course/select_box.png)
+```{r ss, echo = TRUE, , mysize=TRUE, size='\\footnotesize'}
+demog <- dados %>% select(codepac:amostraid)
+testes <- dados %>% select(c(codepac, copias_cv:contagem_cd8))
+```
+
+## `demog` Dados
+
+```{r glimpsedemog, echo = TRUE, , mysize=TRUE, size='\\footnotesize'}
+glimpse(demog)
+```
+
+## Variáveis com Número Limitado de Categorias
+
+  - `sexo` - "Masculino", "Feminino" -- 2 (fácil)
+  - Para `raca`, `escol`, `gestante`, pode usar a função `unique` para ver quantas categorias
+  - `unique`: retorna os elementos únicos de uma variável 
+  
+```{r uniquevars, echo = TRUE, , mysize=TRUE, size='\\scriptsize'}
+unique(demog$raca)
+unique(demog$escol)
+unique(demog$gestante)
+
+```
+
+## Passo 4 -- Simplificar as Variáveis Categoricas
+
+  - Converter todos os 4 ao tipo de `factor`
+    - Não é necessário com outros porque têm muitas categorias 
+  - `gestante` - só tem um valor; não necessário para os cálculos; retirar ela
+  - `raca` - categorias servem; compreensíveis
+  - `escol` - usamos "fundamental", "média", "superior" no dia-à-dia
+    - Simplificar as atuais
+  
+## `factor` como Classe de Variável
+
+  - Variáveis categóricas têm número de nivéis fixos e conhecidos
+    - Ex., "Masculino"/"Feminino"
+  - `factor` é uma classe que gerencia elas com eficiência
+  - `factor` converte categóricas em números internamente mas deixa o valor original como `character`
+  - Com `factor` pode controle a ordem das categorias
+
+## Exemplo: `factor` -- Meses do Ano
+
+  - Imagine a variável mes que tem 4 valores: "jan", "mai", "out", "abr"
+  
+```{r catfat1, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+(meses <- c("jan", "mai", "out", "abr"))
+sort(meses) ## colocar os valores em ordem
+
+```
+
+## Quisemos eles em ordem de mês. Como Podemos Fazer?
+
+  1.  Ensinar R o que são os nivéis possíveis -- os meses
+  2.  Converter `meses` para um `factor`
+  
+```{r catfat2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+mes_level <- c("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", 
+               "set", "out", "nov", "dez")
+mesesf <- factor(meses, levels = mes_level)
+str(mesesf)
+sort(mesesf)
+```
+
+
+## Passo 4A -- Criar Fatores em `demog`
+
+```{r catfat3, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+demog <- demog %>% 
+         mutate(sexo = factor(sexo, levels = c("Masculino", "Feminino"))) %>%
+         mutate(raca = factor(raca, levels = c("Branca", "Parda", "Preta"))) %>%
+         mutate(escol = factor(escol)) # mudança de valores mais tarde
+
+```
+
+## Agora, com Factors, Fácil a Contar Variáveis Categóricas
+
+```{r countfat, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+demog %>% dplyr::count(sexo)
+
+```
+
+
+## Função para Mudar Valores de Factores -- `forcats::fct_recode()`
+
+  - `fct_recode` muda os valores de factors seguindo seu comando
+  - `fct_recode(x, <valor novo> = <valor velho> , ...)`
+  - Aplicado à `sexo`: `fct_recode(demog$sexo, m = "Masculino")
+  
+```{r resexo, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+library(forcats)  ## Carregar "forcats"; instalar se for necessário
+demog <- demog %>%
+         mutate(sexo = fct_recode(sexo, 
+                                  "mas" = "Masculino", 
+                                  "fem" = "Feminino"))
+str(demog$sexo)
+  
+```
+
+## Para Mudar `escol`
+
+  - Queremos a categoria "fundamental" para tratar de 7 ou menos anos
+    - "De 1 a 3 anos"
+    - "De 4 a 7 anos"
+  - Queremos a categoria "media" para 8 - 11 anos
+    - "De 8 a 11 anos"
+  - Queremos a categoria "superior" para 12 ou mais anos
+    - "De 12 e mais anos"
+  - "Nenhuma" só queremos mudar para minísculo "nenhuma"
+  - Podemos dar um de novos nomes às múltiplas categorias velhas
+  
+##
+```{r reescol, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+demog <- demog %>%
+         mutate(escol = fct_recode(escol, 
+                                  "fundamental" = "De 1 a 3 anos",
+                                  "fundamental" = "De 4 a 7 anos",
+                                  "media" = "De 8 a 11 anos",
+                                  "superior" = "De 12 e mais anos",
+                                  "nenhuma" = "Nenhuma"))
+str(demog$escol)
+levels(demog$escol)
+```
+
+
+
+

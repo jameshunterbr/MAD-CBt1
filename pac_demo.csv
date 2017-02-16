@@ -1,0 +1,51 @@
+codepac,idade,sexo,cidnasc,ufnasc,raca,escol,gestante,amostraid,copias_cv,contagem_cd4,contagem_cd8
+96710,60,Masculino,Torres,RS,NA,NA,Nao,05RS090077,5200,898,1311
+93778,73,Masculino,Vargem Grande do Sul,SP,Branca,De 8 a 11 anos,Nao,11SP073735,1947,958,817
+91200,51,Feminino,Rinopolis,SP,Parda,De 4 a 7 anos,Nao,11SP073769,480000,958,817
+91228,50,Masculino,Porto Feliz,SP,Branca,De 8 a 11 anos,NA,13SP070671,257313,142,1009
+96186,44,Feminino,Ico,CE,Parda,De 4 a 7 anos,Nao,11SP073423,2585,524,586
+93513,63,Masculino,Barreirinhas,MA,NA,NA,Nao,04DF080006,84,256,651
+94147,25,Masculino,Lins,SP,Parda,De 4 a 7 anos,Nao,19SP090306,1286,353,393
+99352,61,Feminino,Santana do Livramento,RS,NA,NA,Nao,21PR080198,13000,928,1740
+91437,49,Feminino,Vacaria,RS,Parda,NA,Nao,05RS080108,24000,66,801
+96586,41,Feminino,Tres Lagoas,MS,NA,NA,Nao,11SP073682,40000,66,801
+92162,44,Masculino,Laguna,SC,Branca,NA,Nao,11SP073857,6000,388,450
+93730,81,Masculino,Uniao dos Palmares,AL,NA,De 4 a 7 anos,Nao,11SP073559,390000,471,622
+98623,25,Feminino,Cafelandia,SP,NA,NA,Nao,19SP080352,140000,830,1548
+93304,60,Feminino,Itu,SP,Branca,De 4 a 7 anos,Nao,13SP070825,1700,304,1040
+97592,55,Masculino,Curitiba,PR,NA,NA,Nao,11SP073868,85000,474,1231
+98431,54,Masculino,Congonhas,MG,Parda,De 4 a 7 anos,Nao,11SP084300,52000,1077,1844
+95680,44,Masculino,General Camara,RS,Branca,De 8 a 11 anos,Nao,21PR080208,4800,682,1131
+91078,42,Feminino,Macajuba,BA,Parda,NA,Nao,11SP073321,5300,397,1371
+92968,46,Masculino,Rio do Pires,BA,Parda,De 8 a 11 anos,Nao,11SP073406,880000,488,1059
+95655,56,Feminino,Votorantim,SP,Branca,NA,Nao,13SP070772,9535,83,2000
+90622,59,Feminino,Blumenau,SC,NA,NA,Nao,11SP073865,370,304,874
+99594,62,Masculino,Bento Goncalves,RS,Branca,De 4 a 7 anos,Nao,21PR080207,49000,240,1229
+99264,61,Masculino,Quata,SP,Preta,De 1 a 3 anos,Nao,11SP084384,26000,262,422
+94225,50,Masculino,Uruguaiana,RS,NA,NA,Nao,05RS080061,7877,586,426
+96936,48,Masculino,Uruguaiana,RS,Parda,NA,Nao,05RS090200,346,187,730
+96388,51,Feminino,Bom Sucesso,MG,NA,NA,NA,06MG090074,20000,1126,1782
+90872,52,Feminino,Claudio,MG,Branca,De 4 a 7 anos,NA,06MG090162,14000,511,729
+93109,42,Feminino,Vicente Dutra,RS,Branca,De 12 e mais anos,Nao,05RS090088,34000,591,817
+96489,49,Feminino,Itamogi,MG,NA,NA,Nao,11SP084724,9777,400,1677
+94408,21,Masculino,Buriticupu,MA,Branca,De 4 a 7 anos,Nao,04DF080008,9777,249,1200
+97123,62,Feminino,Ataleia,MG,NA,De 12 e mais anos,Nao,11SP084154,3000,658,1064
+97242,28,Masculino,Maua,SP,Branca,De 4 a 7 anos,Nao,11SP073584,440000,111,1361
+90638,42,Masculino,Porto Feliz,SP,NA,NA,Nao,13SP070743,35369,996,1396
+91992,46,Masculino,Caceres,MT,Branca,De 8 a 11 anos,Nao,11SP073870,270,487,599
+97935,66,Feminino,Santa Clara dÎ‚Oeste,SP,NA,NA,Nao,19SP080316,1500,289,745
+93549,60,Masculino,Guararema,SP,Parda,De 8 a 11 anos,Nao,19SP080336,110000,156,736
+97231,54,Masculino,Blumenau,SC,Preta,De 4 a 7 anos,NA,18SC080284,160000,205,655
+99771,14,Feminino,Birigui,SP,Preta,Nenhuma,Nao,19SP080365,200000,465,838
+97110,68,Masculino,Caico,RN,Branca,De 1 a 3 anos,Nao,11SP084201,38000,927,711
+98441,60,Feminino,Florianopolis,SC,Branca,De 8 a 11 anos,NA,18SC080356,3700,223,1853
+97384,44,Masculino,Jacupiranga,SP,NA,NA,Nao,11SP073408,3700,87,640
+96509,56,Feminino,Sao Luis de Montes Belos,GO,NA,NA,NA,04DF090021,250000,1603,2000
+92129,47,Masculino,Sao Joao del Rei,MG,NA,NA,NA,13SP070648,4700,430,728
+99552,47,Masculino,Agua Preta,PE,NA,NA,Nao,13SP070803,770,624,912
+93892,64,Feminino,Cristino Castro,PI,NA,NA,NA,04DF090019,200000,220,538
+96133,47,Feminino,Rio Casca,MG,Parda,De 4 a 7 anos,NA,06MG090238,38000,498,590
+90251,58,Masculino,Surubim,PE,Parda,NA,NA,13SP070841,54000,596,571
+93623,74,Feminino,Melo Viana,MG,Preta,De 1 a 3 anos,Nao,06MG100381,240000,596,571
+96451,63,Masculino,Paineiras,MG,NA,NA,NA,06MG090208,180495,705,1135
+96816,41,Masculino,Pirapora,MG,NA,NA,NA,06MG090245,240,1020,964
