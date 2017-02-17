@@ -1,0 +1,84 @@
+---
+output: beamer_presentation
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/James/Documents/UNIFESP/MAD Course/course logo.png)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+# Administração do Curso
+  
+## Viagem em Março
+  
+  - Cancelar aulas de 14/3 e 17/3
+  - Repôr as aulas nos dias 9/5 e 12/5
+  - Estender o curso por uma semana
+    
+## Aula de Recuperação
+  
+  - Quinta dia 2/3 (daqui 2 semanas)
+  - Invés de "office hours", terá uma aula
+  - Pauta: Revisão de todos os tópicos até agora
+  - Sala a ser determinada
+  
+# Problema de Festas e Aniversários
+
+## O Problema
+
+  - Numa festa com 30 pessoas, o que é a probabilidade que 2 ou mais pessoas têm o mesmo aniversário?
+  - Dica: Lembre a lei de probabilidade total 
+  - Dica #2: 1 - P(0) = P(pelo menos 1)
+  
+## Solução - 1
+
+  - Podemos calcular *p* de **não ter nenhum par de pessoas** com o mesmo aniversário ($P(0)$)
+  
+  $$p(0)=\frac{p\:\#\:de\:maneiras\:para\:distribuir\:365\:aniversários\:entre\:30\:pessoas}{permutações\:totais\:de\:30\:aniversários}$$
+  
+  - Numerador
+    - permutações sem reposição mas ordem ainda conta
+    
+    $$_{n}P_{r}=\frac{n!}{(n-r)!}=\frac{365!}{(365-30)!}=2.17103e+76$$
+ 
+  - Denominador
+    - Ordem conta de novo: $365^{30}=7.39241e+76$
+    
+## Solução - 2
+
+$$p(0)=\frac{2.17103e+76}{7.39241e+76}=0,2937$$
+$$p(>0)=1-p(0)=0,7063$$
+  - Probabilidade muito favorável para ganhar um pouco de dinheiro
+
+# Problema Monty Hall -- Let's Make a Deal
+
+## Problema Monty Hall
+
+  - Programa de tv de premios 
+  - Jogador vê 3 portas
+    - Atrás 1a fica um premio muito bom (carro, casa, etc.) 
+    - Atrás 2a fica um premio ruim (bode)
+    - Atrás 3a fica um premio ruim (bode)
+  - Monty Hall pede que você escolhe uma porta 
+  - Você escolha porta # 1
+  - Ele abre porta #2 – premio ruim
+    - Bom premio ainda fica no jogo
+  - Ele pergunta se você quer ficar com porta #1 ou trocar 
+  - *O que você deve fazer? Ficar com porta #1 ou trocar?*
+  
+## Solução Monty Hall - Tabela
+![](/Users/James/Documents/UNIFESP/MAD Course/monty hall sol.png)
+
+## Solução Monty Hall
+  - Tem probabilidade de 2/3 de ganhar o carro se troca a porta!
+    - Só 1/3 se você fica com Door #1
+    - **SWITCH**
+  - Você pode perder só no caso que o carro fica atrás de Porta #1 (1 porta)
+    - Deve ganhar se o carro fica atrás das Portas #2 ou #3 (2 portas)
