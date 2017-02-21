@@ -286,6 +286,20 @@ maisfreq <- sum(peso_lb == modo)
     - Compartilhei uma função `modex` nas versões .RMD e .R destes slides
     - Outra função usa o nome `mode`
 
+## Modo Função -- `modex`
+
+  - Função para ajudar com o cálculo de modo
+  - Com funções, não precisa repetir a teclagem dos cálculos
+  - Tecle uma vez e chame a função depois
+
+```{r modexfunc, echo = TRUE, eval = FALSE}
+modex <- function(x) { ## R has another function mode that does something else useful
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+modo <- modex(peso_lb)
+```
+
 ## Mediana
 
   - Representa o valor diretamente no meio da distribuição
@@ -361,7 +375,8 @@ testes <- dados %>% select(c(codepac, copias_cv:contagem_cd8))
 
 ## Raiz Quadrado Primeiro
 
-```{r sqrtcv, echo = TRUE, mysize=TRUE, size='\\tiny'}
+```{r sqrtcv, echo = FALSE, mysize=TRUE, size='\\tiny'}
+options(scipen = 1000)
 Desc(sqrt(testes$copias_cv), conf.level = NA, 
      main = "Raiz Quadrado de Cópias CV", plotit = FALSE)
 ```
@@ -371,7 +386,8 @@ Desc(sqrt(testes$copias_cv), conf.level = NA,
 
 ## Transformação Log Base 10 -- Típico para CV
 
-```{r logcv, echo = TRUE, mysize=TRUE, size='\\tiny'}
+```{r logcv, echo = FALSE, mysize=TRUE, size='\\tiny'}
+options(scipen = 1000)
 Desc(log10(testes$copias_cv), conf.level = NA, 
      main = "Log Base 10 de Cópias CV", plotit = FALSE)
 ```
