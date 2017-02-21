@@ -1,0 +1,380 @@
+---
+output: beamer_presentation
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+# Estatística Descritiva -- Entender as Variáveis
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+# Variáveis Categóricas -- Proporções, Taxas e Relações (ratios)
+
+```{r loadmods, echo = FALSE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(forcats))
+```
+
+## Livro Que Forneceu Alguns Exemplos Hoje
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/biostat_cover.png)
+
+## Dados Exemplares
+
+```{r loadcegdata, echo = FALSE}
+raca <- c("branco", "naobranco")
+pop <- c(32930233, 3933333)
+casos <- c(2832, 3227)
+vars <- c("raca", "pop", "casos")
+cegGlauc <- tibble(raca, pop, casos)
+colnames(cegGlauc) <- vars
+```
+
+  - Estudo sobre diferenças raciais para incidência de cegueira por causa de glaucoma
+  
+## 
+```{r showdata, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+str(cegGlauc)
+kable(cegGlauc)
+```
+
+  - Contagem pura dos `casos` não ajuda muito para entender os dados
+    - Diferença em tamanho das populações precisa ser tomado em conta
+
+## Proporção a Resgate
+
+  - Proporção dos casos a população por raça pode esclarecer o problema
+  - Proporção um número entre 0 e 1
+    - Proporção acima de 1 não faz sentido
+  - Quando fala de incidência das doenças, esse proporção = **prevalência** da doença
+
+$$ prevalência= \frac{número\: dos\: casos}{número\: total\: na\: população\: examinada}$$
+
+## Calcular as Proporções
+```{r calcprop, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+cegGlauc <- cegGlauc %>% mutate(prop = casos/pop)
+kable(cegGlauc)
+```
+
+  - Proporção é um número muito pequeno
+  - Pode fazer ele mais significativo se multiplica por 10.000 ou 100.000
+    - Coloca em termos de proporção por 10 mil ou 100 mil de população
+
+## Calcular Proporção por 100.000 Habitantes
+```{r calcprop2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+cegGlauc <- cegGlauc %>% mutate(prop100mil = prop*100000)
+kable(cegGlauc)
+```
+
+  - Agora, têm 2 números que podemos comparar
+  - Não brancos têm `r cegGlauc$prop100mil[2]` casos por 100.000 pessoas
+  - Brancos só têm `r cegGlauc$prop100mil[1]` casos por 100.000 pessoas
+  - Não brancos têm `r round(cegGlauc$prop100mil[2]/cegGlauc$prop100mil[1],2)` o número de casos da doença que os brancos
+  - Doença desproporcionadamente afeta pessoas não brancos. 
+  
+## Valor das Proporcões para os Dados Categóricos
+
+  - As proporções permitem que nós comparamos os grupos
+    - Dá para os grupos uma base comum
+  - Proporção é a forma mais simples de normalização dos dados
+  
+## Proporções e Testes Diagnosticos
+
+  - Como vimos semana passada, testes diagnósticos não são 100% exatos
+    - Pessoas que têm doença com resultado negativo -- **falso negativo**
+    - Pessoas que não têm doença com resultado positivo -- **falso positivo**
+    - Classificação errada
+
+## Teste Diagnóstico para Câncer Cervical
+```{r loadccervdata, echo = FALSE}
+Estado <- c("saudável", "doente")
+Neg <- c(23362, 225)
+Pos <- c(362, 154)
+vars <- c("Estado", "Neg", "Pos")
+cervCan <- tibble(Estado, Neg, Pos) 
+colnames(cervCan) <- vars
+cervCan$Tot <- rowSums(cervCan[,2:3])
+```
+
+  - Teste com amostra de 24.103 mulheres para câncer cervical
+  - (Teste velho -- só para demonstração)
+  
+## Duas Proporções Que Nos Interessem
+
+  - Sensibilidade (Positivos Verdadeiros)
+    - Teste pode identificar essas pessoas que realmente são doentes?
+  
+$$ sensibilidade=\frac{número\: das\:  pessoas\:  doentes\:  que\:  testam\:  positivo}{número\:  total\:  das\:  pessoas\:  doentes} $$
+
+  - Especificidade (Negativos Verdadeiros)
+    - Teste pode só identificar pessoas doentes e não as saudáveis?
+  
+$$ especificidade=\frac{número\: das\:  pessoas\:  saudáveis\:  que\:  testam\:  negativo}{número\:  total\:  das\:  pessoas\:  saudáveis} $$
+
+## Dados de Amostra
+
+```{r ccandados, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+kable(cervCan)
+sensib <- cervCan$Pos[Estado == "doente"] / cervCan$Tot[Estado == "doente"]
+paste("Sensibilidade = ", sensib * 100, "%")
+specif <- cervCan$Neg[Estado == "saudável"] / cervCan$Tot[Estado == "saudável"]
+paste("Especifidade = ", specif * 100, "%")
+```
+
+## Taxas
+
+  - Taxa é semelhante a uma proporção normalmente com referência a tempo
+    - Taxa de mudança; Ex: taxa de crescimento de um tumor
+  - Taxas podem exceder 1
+    - Se algo dobre em tamanho num período, taxa de crescimento seria 100% ou 1
+    
+$$ taxa=\frac{valor\: novo -  valor\:  velho}{valor\:  velho}=\frac{mudança}{valor\:  velho} $$
+
+```{r genotip, echo = FALSE}
+genotip <- read.csv("yr_genotipagem.csv") %>% 
+           filter(yr >= 2010) %>%
+           count(yr)
+
+```
+
+## Exemplo: Crescimento em Número de Genotipagens para Pacientes com HIV
+
+```{r prgenotip, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+kable(genotip, captions = "Genotipagens por Ano")
+```
+
+  - Qual é a taxa de crescimento entre 2010 e 2015 em porcentagem?
+  
+```{r calccresc, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+taxacres <- 100 * (genotip$n[genotip$yr == 2015] - 
+                    genotip$n[genotip$yr == 2010]) / 
+                    genotip$n[genotip$yr == 2010] 
+
+```
+
+  - Taxa de crescimento = `r taxacres ` %
+  
+## Relações (Ratios)
+
+  - Relação das duas quantidades semelhantes medidas em grupos diferentes ou sob condições diferentes
+  - Ex: relação de homens e mulheres que fumam
+  - Se temos 200 homens na amostra que fumam e 150 mulheres, 
+    - Relação seria 200/150 ou 1,33 homens que fumam por cada mulher
+
+## Risco Relativo -- Relação Chave para Epidemiologia
+
+  - Relação dos riscos de uma doença entre dois grupos diferentes
+  
+$$ risco\:relativo\: (RR)=\frac{incidência\: da\:  doença\:  em\:  grupo\:1}{incidência\: da\:  doença\:  em\:  grupo\:2} $$
+  
+## Doença Cardíaca Coronária (CHD) e Fumar
+
+  - Amostra de Americanos do Estudo Framingham
+  - Estudo case-control
+    - Case - tem CHD nos últimos 10 anos
+    - Control - saudável
+  - Fumar -- Fator Confounding 
+    - Quanto fumar muda os resultados de CHD
+```{r chdfum, echo = FALSE, message = FALSE}
+framCHD <- read_csv("framingham_ex1.csv") %>%
+  mutate(fumante = factor(currentSmoker)) %>%
+  mutate(CHD10Anos = factor(TenYearCHD)) %>%
+  mutate(fumante = fct_recode(fumante, "Sim" = "1", "Nao" = "0")) %>%
+  mutate(CHD10Anos = fct_recode(CHD10Anos, "Sim" = "1", "Nao" = "0")) %>%
+  select(fumante, CHD10Anos)
+
+tabCHD <- table(framCHD)
+
+# Calcular linha (fumante) e coluna (CHD) totais 
+fumtots <- (rowSums(tabCHD))
+CHDtots <- (colSums(tabCHD))
+fumtots <- unname(fumtots)
+CHDtots <- unname(CHDtots)
+
+# Calcular Incidências
+fumincid <- tabCHD[2,2]/fumtots[2]
+naofumincid <- tabCHD[1,2]/fumtots[1]
+```
+
+##
+
+```{r chdfumpr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+suppressWarnings(tabCHD)
+print(paste("Fumantes Total:", "Não = ", fumtots[1], "| Sim = ", fumtots[2]))
+print(paste("CHD 10 Anos Total:", "Não = ", CHDtots[1], "| Sim = ", CHDtots[2]))
+```
+
+## Calcular Incidência nos Dois Grupos
+
+  - Fumantes(Sim)
+  
+  fumantes e doentes / todos os fumantes = `r tabCHD[2,2]` / `r fumtots[2]` = `r fumincid`
+  
+  - Não-fumantes
+  
+  não-fumantes e doentes / todos os não-fumantes = `r tabCHD[1,2]` / `r fumtots[1]` = `r naofumincid`
+  
+  - Risco Relativo (RR)
+  
+  $$ RR=\frac{incidência\:fumantes}{incidência\:nãofumantes} $$
+```{r rrcalc, echo = TRUE, message = FALSE, mysize=TRUE, size='\\scriptsize'}
+rr <- fumincid / naofumincid
+```
+  - RR = `r rr`
+
+## Resumo de Métodos Descritivos para os Dados Categoricos
+
+  - Proporções
+    - Prevalência
+    - Proporção por Unidade de População (Normalização)
+    - Testes Diagnósticos
+    - Sensibilidade e Especificidade
+  - Taxas
+    - Medir mudanças
+  - Relações
+    - Risco Relativo
+    
+# Variáveis Continuas
+
+## Distribuição de Frequência
+
+  - Exemplo simples: pesos de 57 crianças numa creche
+  - O que podemos aprender sobre a distribuição de frequência dos pesos?
+  
+```{r pesos1, echo = FALSE}
+peso_lb <- c(68, 63, 42, 27, 30, 36, 28, 22, 23, 24, 25, 44, 
+          65, 43, 36, 42, 28, 31, 28, 25, 45, 12, 32, 49,
+          38, 42, 27, 31, 16, 24, 69, 47, 23, 22, 43, 23,
+          19, 46, 30, 43, 49, 12, 32, 79, 27, 25, 74, 51,
+          12, 57, 51, 50, 38, 21, 27, 49, 28)
+```
+
+## Medidas de Tendência Central
+
+  - Tem um ponto que melhor descreve a distribuição?
+  - Qual número ocorre mais frequentemente? (**Modo**)
+  - Qual número sente do meio da distribuição? (**Mediana**)
+  - Qual número melhor representa o centro da distribuição? (**Média**)
+  
+## Modo
+
+```{r modo, echo = FALSE}
+modex <- function(x) { ## R has another function mode that does something else useful
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+modo <- modex(peso_lb)
+maisfreq <- sum(peso_lb == modo)
+
+```
+
+  - Mais simples
+  - O valor mais frequente da distribuição
+  - Entre os pesos, o modo é `r modo` lbs.
+  - É o mais frequente, ocorre `r maisfreq` vezes
+  - R não tem uma função por modo.
+    - Compartilhei uma função `modex` nas versões .RMD e .R destes slides
+    - Outra função usa o nome `mode`
+
+## Mediana
+
+  - Representa o valor diretamente no meio da distribuição
+  - Barra central num boxplot
+  - Para calcular, primeiro pôr os itens em ordem de menor até maior
+  - Se tiver um número impar dos itens, selecione aquele no meio
+  - Se tiver um número par dos itens, selecione os dois no meio e divide a diferença em dois
+    - Mesma coisa que a média dos 2 itens no meio
+  - R tem a função `median` que faz todo o trabalho
+  - Muito útil quando tem distribuições bastante skewed
+  - A mediana de nossos pesos é `r median(peso_lb)`
+  
+## Média
+  
+  - Estatística mais usada (e abusada) hoje
+  - Mede o centro de gravidade de todos os itens
+  - É a soma de todos os valores dos itens dividido por o número dos itens
+  - População
+  
+  $$ \mu=\sum_{i=1}^{n}{X_i} $$ 
+  
+  - Amostra
+  
+  $$ \bar{x}=\sum_{i=1}^{n}{x_i} $$
+  
+  - A média de nossos pesos é `r mean(peso_lb)`
+  
+## Medidas de Dispersão
+
+  - Mais simples: quais são os valores máximos e mínimos? **range**
+    - Para nossos dados: `r range(peso_lb)`
+  - Diferença entre 1º e 3º Quarteis: Inter-Quartile Range **IQR**
+    - Mais restrito para 50% da distribuição em volta da mediana
+    - para nossos dados: `r IQR(peso_lb)`
+  - Medir a dispersão em volta da média **desvio padrão**
+    - Falamos semana passada sobre ele
+    - Média das divergências entre os dados individuais e a média
+    - É o raiz quadrado da variança $\sqrt{\sigma^2}$
+    - Com a média, constitui os 2 parâmetros que definam a distribuição normal
+
+## Coeficiente de Variação
+
+  - Mede quanto dispersão tem in termos de uma relação
+  - Definido como $c_v=\frac{\sigma}{\mu}$
+  - Quantas média é o desvio padrão
+  - Não é padronizado
+  - Mas indica se o desvio padrão é alto demais para fazer análises muito subtis
+  
+## `descTools:Desc` Mostra Medidas Descritivas Bem
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/peso_Desc.png)
+ 
+## Inclui Gráficos Úteis
+ ![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/peso_Desc_gr.png)
+ 
+## Transformações das Variáveis
+```{r cvload, echo = FALSE, message = FALSE}
+dados <- read_csv("pac_demo.csv")
+testes <- dados %>% select(c(codepac, copias_cv:contagem_cd8))
+```
+
+ 
+  - Os dados da carga viral de semana passada
+    - Altamente skewed
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/Desc_plot_cv.png)
+
+## Pode Mudar a Escala da Variável para Fazer ele Mais Útil para Análise
+
+  - Agora, tem range de `r max(testes$copias_cv) - min(testes$copias_cv)`
+  - Coeficiente de variação é `r sd(testes$copias_cv)/mean(testes$copias_cv)` 
+  - Pode transformar a escala de variável 
+    - Raiz quadrado
+    - Logaritmo (ou base 10 ou base `e` [logaritmo Neperiano])
+
+## Raiz Quadrado Primeiro
+
+```{r sqrtcv, echo = TRUE, mysize=TRUE, size='\\tiny'}
+Desc(sqrt(testes$copias_cv), conf.level = NA, 
+     main = "Raiz Quadrado de Cópias CV", plotit = FALSE)
+```
+
+## Gráfico de Transformação de Raiz Quadrado
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/Desc_gr_cv_sqrt.png)
+
+## Transformação Log Base 10 -- Típico para CV
+
+```{r logcv, echo = TRUE, mysize=TRUE, size='\\tiny'}
+Desc(log10(testes$copias_cv), conf.level = NA, 
+     main = "Log Base 10 de Cópias CV", plotit = FALSE)
+```
+
+## Gráfico da Transformação Log Base 10  
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/Desc_gr_cv_log.png)
