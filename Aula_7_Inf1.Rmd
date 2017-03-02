@@ -177,6 +177,8 @@ $$p(Cara)\approx\hat{p}(Cara)=\frac{\#\:de\:CARAS\:observadas}{\#\:de\:jogadas}$
 
   - Se repetimos um experimento muitas vezes, a probabilidade do resultado médio irá convergir a uma distribuição normal (curva de sino)
   - Permite que usamos a distribuição normal como base da maioria de nossos testes estatísticas (paramétricas)
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/graph_clt.png)
   
 ## Quincunx (Quincunce)
 
