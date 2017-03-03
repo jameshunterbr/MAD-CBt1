@@ -1,0 +1,107 @@
+---
+title: "Conjunto de Problemas — Análise Exploratória"
+author: "James R. Hunter"
+date: "24 de fevereiro de 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loadmods, echo = TRUE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(forcats))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(nycflights13)) #pacote de dados
+  suppressPackageStartupMessages(library(forcats))
+  options(scipen = 1000)
+```
+
+
+## Economia de Combustível nos Carros nos EUA entre 1999 e 2008
+
+Os dados ficam num conjunto de dados chamada `mpg` que faz parte de pacote `ggplot2`.
+
+Carregar os dados usando o comando `data(mpg)`. 
+
+###1.  Crie um novo conjunto chamado `suvcompact` que só contém as classes `suv` e `subcompact`. Quantos elementos tem `suvcompact`?
+
+```{r suvcompact, echo = TRUE, eval = TRUE, message = TRUE}
+suvcompact <- mpg %>% 
+              filter(class == "suv" | class == "subcompact")
+elementos = nrow(suvcompact)
+paste("Elementos =", elementos)
+```
+
+###2.  Qual é a economia de combustível nas estradas (`hwy`) para todos os carros combinados. Mostre a médiana e média. Também o IQR e o desvio padrão
+
+```{r fuelecon, echo = TRUE, eval = TRUE, message = FALSE}
+## solução mais simples
+paste("Média =", mean(mpg$hwy), "Mediana =", median(mpg$hwy), 
+      "IQR =", IQR(mpg$hwy), "Desvio Padrão =", sd(mpg$hwy))
+```
+
+###3. As variáveis "hwy" e "cty" são expressos em "miles per gallon". Converter esses variáveis em "km por litro". Em média, quantos kilómetros por litro consegue um Volkswagem Passat na cidade (`cty`)?
+
+  - 1 galão = 3.78541 litros
+  - 1 milha = 1.60934 kilometros
+
+```{r converson, echo = TRUE, eval = TRUE, message = FALSE}
+kmmilha <- 1.60934
+litgal <- 3.78541
+convertrate <- kmmilha/litgal
+kmpl <- mpg %>% 
+        mutate(cty = cty * convertrate) %>% 
+        mutate(hwy = hwy * convertrate)
+meanPassat <- kmpl %>%
+              filter(model == "passat") 
+avgPassat <- mean(meanPassat$cty)
+paste("Passat cidade kmpl =", avgPassat)
+```
+
+###4. Usando `descTools::Desc` e kilometros/litro, mostre um resumo das estatísticas descritivas para `hwy` para carros de 1999 com o gráfico (`plotit = TRUE`). Também, imprime o `summary` de Base R. 
+
+```{r descconsumo, echo = TRUE, eval = TRUE, message = TRUE}
+Desc(kmpl$cty[kmpl$year == "1999"], plotit = TRUE)
+summary(kmpl$cty[kmpl$year == "1999"])
+```
+
+###5. Faça um gráfico de dispersão que compara o kilometragem na cidade e o tamanho de motor (`displ`). Inclue rótulos para os eixos do gráfico e a legenda. Use cor para diferençiar entre carros de 1999 e 2008.
+
+```{r gr1dispkm, echo = TRUE, eval = TRUE, message = TRUE}
+gr1 <- ggplot(data = kmpl, mapping = aes(x = displ, y = cty, colour = factor(year))) + geom_point()
+gr1 <- gr1 + labs(x = "Tamanho de Motor em litros",
+                  y = "Kilometragem na Cidade km/l",
+                  colour = "Ano")
+gr1
+```
+
+###6. Desenhe um boxplot que compara a kilometragem nas estradas (`hwy`) para os carros de classe SUV contra os subcompactos.
+
+```{r boxsuvsub, echo = TRUE, eval = TRUE, message = TRUE}
+gr2 <- kmpl %>%
+       filter(class == "suv" | class == "subcompact") %>%
+       ggplot(mapping = aes(x = class, y = hwy)) + geom_boxplot() + ylim(0, 20)
+gr2 <- gr2 + labs(x = "Class", y = "Kilometragem nas Estradas (km/l)")
+gr2
+```
+
+###7. Faça uma histograma de `hwy` com uma curva de densidade em vermelho sobreposta. Use o `geom_linha()` para fazer a curva.
+
+```{r histo, echo = TRUE, eval = TRUE, message = TRUE}
+gr3 <- ggplot(data = kmpl, mapping = aes(x = hwy, y = ..density..)) 
+gr3 <- gr3 + geom_histogram(color = "white") 
+gr3 <- gr3 + geom_line(stat = "density", color = "red")
+gr3
+
+```
+
+###8. Finalmente, queremos ver um histograma e curva de densidade que mostra a diferença entre todas as classes de vehiculos na amostra. Use `facet_wrap()` com 4 fileiras.
+
+```{r histo2, echo = TRUE, eval = TRUE, message = TRUE}
+gr4 <- gr3 + facet_wrap(~ class, nrow = 4) 
+gr4
+
+```
