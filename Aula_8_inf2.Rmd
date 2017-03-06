@@ -6,7 +6,7 @@ theme: "Boadilla"
 colortheme: "whale"
 ---
 
-![](/Users/James/Documents/UNIFESP/MAD Course/course logo.png)
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, fig.height = 4, fig.width = 4)
@@ -24,6 +24,150 @@ knitr::knit_hooks$set(mysize = function(before, options, envir) {
   suppressPackageStartupMessages(library(forcats))
   options(scipen = 1000)
 ```
+
+# Inferência -- 1 (Parte B)
+
+## Distribuição de Amostra
+
+  - O que observamos é uma distribuição de amostra
+  - Nosso trabalho é avaliar a congruência dela com uma distribuição teórica
+  - Valores observados variam de amostra em amostra
+  - Esta variabilidade se chama: variância amostral
+  - Podemos fazer várias amostras e criar uma distribuição das médias ($\bar{x}$) 
+  - Distribuição das amostras terá uma média e variância também
+
+## Valor Esperado e Variância da Distribuição de Amostras
+
+  - Esses existem por causa da Teorema de Limite Central 
+
+$$ E(\bar{X})=\mu$$
+$$ Var(\bar{X})=\frac{\sigma^{2}}{n} $$
+$$ DP(\bar{X})=\sqrt{Var(\bar{X})}=\frac{\sigma}{\sqrt{n}}$$
+
+## Comparar Estatísticas das Amostras a População
+
+  - Rice University – Applet das Distribuições Amostrais 
+  -Site: http://onlinestatbook.com/stat_sim/sampling_dist/index.html 
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/samp dist blank.png)  
+  
+## Distribuição Normal 
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/Normal Dist Sampling.png)    
+  
+## Distribuição Assimétrica  
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/Skewed dist.png)    
+
+## Distribuição Uniforme
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/Uniform Dist.png) 
+
+## Resumo - Distribuição Amostral -- Proporções
+
+  - Teorema de Limite Central (CLT) 
+  - Estudamos amostras e comparar nossa amostra a todas as amostras possíveis
+  - Distribuição Amostral de proporção binomial
+  
+  $$ \hat{p}\;\thickapprox N(p,\frac{p(1-p)}{n})$$
+  
+    - Distribuição Amostral da Média 
+
+$$ \bar{X}\thickapprox N(\mu,\frac{\sigma^{2}}{n})$$
+
+  - N.B. $N(\mu,\sigma^{2})$ quer dizer distribuição normal com média de $\mu$
+  e variância de $\sigma^{2}$
+
+## Vamos Imaginar que Temos uma Garrafa Cheio de Contas 
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/beads_jar.png) 
+
+## 
+  
+  - 2 Cores -- Vermelho e Azul
+  - Não sabemos a proporção de cada cor
+  - Podemos fazer um experimento
+    - Tirar 25 contas da garrafa e contar as cores para estimar a proporção verdadeira
+    - Pode repetir isso múltiplas vezes (**muitas**!!) para estimar a proporção na garrafa
+    - Usar a função `sample` em R
+  - *Simulação Monte Carlo*
+    - Simular com o computador um evento e repetir muitas vezes
+    - Estimação do valor de população
+    - Aproveita da Lei de Grandes Números
+
+##
+
+  - Vamos criar as contas com `rep`
+    - Vai criar um vetor com todos as contas na garrafa
+    - Não vou mostrar aqui 
+```{r criarcontas, echo = FALSE, message = FALSE, warning = FALSE}
+conta <- rep(c("vermelho", "azul"), times = c(526, 474))
+```
+  - Vamos selecionar 1 conta da garrafa
+```{r}
+sample(conta, 1)
+```
+
+  - De novo
+```{r}
+sample(conta, 1)
+``` 
+
+## Repetir Multiplas Vezes -- com `replicate`
+  
+  - Muitas vezes -- 10.000 
+```{r echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+trials <- 10000
+set.seed(1)
+eventos <- replicate(trials, sample(conta, 1))
+head(eventos)
+```
+
+## Determinar o Resultado da Simulação
+
+  - Usar funções `table` e `prop.table`
+    - `table` -- tabula os resultados
+    - `prop.table` -- calcula as proporções dos resultados
+```{r echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+(tab <- table(eventos))
+prop.table(tab)
+```
+
+## Proporções Verdadeiras
+
+  - Divulgação das proporções verdadeiras
+    - **azul** -- 0.474
+    - **vermelho** -- 0.526
+
+## Com e Sem Substituição
+
+  - `replicate` funciona *com substituição*
+    - Tirar a conta da garrafa e repor depois
+  - *Sem substituição* quer dizer que não repormos a conta
+    - Fica permanentemente perdido para as tabulações futuras
+
+## Distribuições de Probabilidade
+
+  - Distribuições dos números e das probabilidades são vinculados
+    - Ex: Quincunce
+  - *Função densidade de probabilidade* $f(x)=c$
+    - probabilidade que a distribuição assume um valor específico
+  - *Função de probabilidade cumulativa* $F(x)\leq c$
+    - proporção dos valores na distribuição que ficam abaixo ou igual a um valor específico
+
+## Aplicar para Proporção das Contas Azuis
+
+  - Converter as cores em números ("azul" = 1)
+```{r azuis, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+contnum <- as.numeric(conta == "azul")
+```
+
+  - Podemos acertar que o função cumulativa para "azul" (1) 
+    - $F(1)=\frac{474}{1000}=0.474$
+  - Para "vermelho" (0)
+     - $F(0)=\frac{526}{1000}=0.526$
+
+## Para Variáveis Categoricas -- Distribuição Cumulativa Não Intuitiva
+
+  - Melhor fazer o que fizemos com os números
+  - Define probabilidade de todos os estados possíveis da variável
+  $\mbox{Pr}(\mbox{vermelho})=0.526$ e $\mbox{Pr}(\mbox{azul})=0.474$.
 
 # Inferência - 2
 
@@ -44,6 +188,7 @@ knitr::knit_hooks$set(mysize = function(before, options, envir) {
     - Questão -- Quantas Democrats tem a cidade?
   - Não sabe o valor da população (49,6%)
   - Quer estimar este valor através amostras 
+  
 ```{r eleitores, echo = FALSE, message=FALSE, warning=FALSE}
 n <- 10^6 ##número de eleitores
 set.seed(1)
@@ -145,6 +290,7 @@ $$\mbox{SE}(Dem/1000) = \frac{\sqrt{p(1-p)}}{\sqrt{N}}$$
   - O valor esperado exato depende do valor de $p$ que não sabemos
   - Melhor aproximação para $p$ é $\hat{p}$
   - Assim, podemos dizer que
+  
 ```{r statephat, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
 p_hat <- mean(poll == "D")
 se <- sqrt(p_hat * (1 - p_hat)/1000)
@@ -234,7 +380,7 @@ cat("Proporção teorica: ", pnorm(-1) + (1 - pnorm(1)))
   - Se repetimos um experimento muitas vezes, a probabilidade do resultado médio irá convergir a uma distribuição normal (curva de sino)
   - Permite que usamos a distribuição normal como base da maioria de nossos testes estatísticas (paramétricas)
 
-![](/Users/James/Documents/UNIFESP/MAD Course/graph_clt.png) 
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/graph_clt.png) 
 
 ## Para CLT Funcionar -- Premissas Requisitadas
 
@@ -249,7 +395,7 @@ cat("Proporção teorica: ", pnorm(-1) + (1 - pnorm(1)))
 ## O Sábio Dr. House
 
   - Todos Mentem
-![](/Users/James/Documents/UNIFESP/MAD Course/everybody lies 2.jpg) 
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/everybody lies 2.jpg) 
 
 ## IC -- Exemplo
 
@@ -323,10 +469,10 @@ norm.plot
   - 19 de 20 amostras vai ter um $p$ que cairia dentro do intervalo e só 1 vai ter um valor fora 
 
 ## Formula para Intervalo de Confiança
-![](/Users/James/Documents/UNIFESP/MAD Course/IC_form.png) 
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/IC_form.png) 
 
 ## 3 Elementos para Calcular Intervalo
-![](/Users/James/Documents/UNIFESP/MAD Course/elementos_de_calc_IC.png)
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/elementos_de_calc_IC.png)
 
 ## Calcular Um IC para Proporção
 
@@ -353,11 +499,354 @@ library(binom)
 binom.confint(sum(tiras), n, conf.level = 0.95, methods = "asymptotic")
 ```
 
+# Testes de Hipoteses das Médias
 
+## Exemplo -- Temperatura Normal Humana
 
+  - Temperatura normal dos seres humanos usualmente dada como 37ºC
+  - É verdade? Fazemos um teste empírico com 130 ~~cobaias~~ alunos
+    - Alunos canadenses neste caso
+    
+```{r tempdados, echo = TRUE, mysize=TRUE, size='\\scriptsize' }
+temps <- read_table("TempData.txt", col_names = FALSE) 
+colnames(temps) <- "tempC"
+suppressMessages(library(psych))
+psych::describe(temps)
+```
 
+## Resumo das Estatística da Amostra
+```{r statamost, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+xbar <- mean(temps$tempC); paste ("Média =", xbar) # média
+dp <- sd(temps$tempC); paste ("Desvio Padrão =", dp) # desvio padrão
+n <- length(temps$tempC); paste ("n =", n)
+```
 
+## Boxplot da Amostra
+```{r boxamost, echo = TRUE, mysize=TRUE, size='\\scriptsize', fig.height=2.5, fig.width=5}
+boxtemp <-  ggplot(temps, aes(y = tempC, x = "temp C")) + geom_boxplot()
+boxtemp <- boxtemp + geom_hline(yintercept = 37, color = "red")
+boxtemp <- boxtemp + stat_summary(fun.y="mean", geom="point", 
+                                  shape=23, size=3, fill="white")
+boxtemp
+```
 
+## Perguntas
 
+  - Lembrete dos Números Chaves
+    - Média da Amostra: `r round(xbar, 1)`
+    - Normal teórica: 37
+  - Qual é a probabilidade de obter diferenças de 0.2 graus?
+  - A diferença entre 36.8 e 37.0 é significativa?
 
+## Testes de Hipoteses
 
+  - Testes de contradição
+  - Não podemos provar diretamente uma hipótese
+  - Precisamos derrubar uma hipótese que podemos testar 
+  - E ter uma alternativa na mão
+  - Estamos trabalhando com incerteza e variabilidade natural
+  - Nós vamos procurar uma resposta testando nossos dados contra o mundo teórico das distribuições
+
+## Passos para Formulação e Execução dos Testes
+
+  1. Formular uma hipótese (e alternativa) e desenhar um teste
+    - Hipótese que vamos testar é a “hipótese nula”: $H_0$
+    - Hipótese alternativa é a hipótese de pesquisa: $H_1$
+    - Vamos ver se tivermos suficiente evidência para negar $H_0$
+    - Podemos conduzir o teste de um lado ou de dois lados da distribuição
+
+## As Três Condições
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/h1h0_gr.png) 
+
+## 2.  Colecionar dados e calcular estatística de teste
+
+  - Dados calculados baseado na ideia que $H_0$ é verdade
+
+##  3.  Transformar estatística de teste na escala probabilística
+  
+$$ 0 \le p \le 1$$
+  
+  - Assumindo $H_0$, quão provável seria a observação de uma estatística de teste deste porte (ou maior) aleatoriamente 
+  - Menor o valor de probabilidade ($p$), mais forte é a evidência contra $H_0$ 
+  - $H_0$ ou é verdade ou não é verdade — não assume valores aleatoriamente
+  - Valor $p$ avisa quão prováveis seriam os dados observados se $H_0$ for verdade
+
+##  4. Formar uma conclusão baseada no valor p
+
+  - 2 Escolhas
+    - Valor $p$ não é pequeno
+    - *$\therefore$ Dados consistente com $H_0$*
+    - Valor $p$ é pequeno
+    - *$\therefore$ Dados suficiente fora de normal contra $H_0$ em favor de $H_1$ que o resultado é significativa*
+
+  - Quão pequeno é *pequeno*
+    - Como na CI, $p \le 0.05$
+    
+## Força de Evidência
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/evidence.png) 
+
+## Teste de Média
+
+  - Usamos mesmo tipo de cálculo para média que para proporção em termos de dados que precisamos: $\bar{x}, s^2$ e $n$
+  
+    - Lembrete de Distribuição Amostral de $\bar{x}$
+    
+$$\mbox{Distribuição Amostral de }\bar{X}\thickapprox N(\mu,\frac{\sigma^2}{n})$$
+
+  -  Mas, $\sigma^2$ desconhecido
+  
+## Podemos substituir $s^2$ para $\sigma^2$?
+
+  - Sabemos $s^2$ -- variança da amostra
+  - Quase, mas não
+  - Em vez disso, precisamos usar uma distribuição semelhante à distribuição normal
+  - Distribuição t (mais formalmente Student’s t)
+  - Historia de “Student” – William Sealy Gossett de Cervejaria Guinness em Dublin
+  
+## Estatística Teste para Distribuição t
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/t-test.png) 
+
+## Graus de Liberadade
+
+  - Calculo de variância da amostra use $(n-1)$ invés de $n$
+    - Função `sd` em R usa $(n-1)$ 
+
+$$s=\sqrt{\frac{\sum(x_i - \bar{x})^2}{n-1}}$$
+
+  - Grau de liberdade (*df*) representa os $(n-1)$ desvios que podem assumir valores independentemente
+  - O último valor deve fazer o total = 0; $\therefore$ **não tem liberdade**
+  - Para teste t, os graus de liberdade são $(n-1)$
+  
+## Student's t -- Família de Distribuições
+
+  - Cada grau de liberdade define uma curva diferente da distribuição t
+  - As curvas têm forma semelhante com a curva normal, com caudas mais grossas
+  - Quando df’s aproximam $\infty$, curva aproxima curva normal
+  - No exemplo seguinte, pode ver que com uma amostra de 51 e 95% confiança, valores críticos de normal e t ainda são diferentes
+
+```{r normvt, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+paste("Valor Crítico -- Normal =", qnorm(0.975))
+paste("Valor Crítico -- t Dist =", qt(0.975, 50))
+```
+
+##
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/familia_t.png) 
+
+## Funções das Distribuições em R
+
+  - Cada distribuição tem 4 funções que mostram valores associados com ela
+    - *d*:  densidade (probabilidade de que x vai ter este valor)
+    - *p*:  área sob a curva da distribuição a esquerda do valor (entre $-\infty$ e o valor)
+    - *q*:  o valor da distribuição do percentil ou quantil q 
+    - *r*:  números aleatórios usando a distribuição
+  - R tem muitas distribuições: as mais comunas:
+    - Normal (`norm`)
+    - Uniforme (`unif`)
+    - t (`t`)
+    - F (`f`)
+    - Binomial (`binom`)
+    - Poisson (`pois`)
+    - Qui-quadrado (`chisq`)
+
+## Existem um Variedade Larga de Outras Distribuições
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/paranorm_dist.png) 
+
+##  Funções das Distribuições
+
+  - Chamadas às funções tem o formato:
+    - `[dpqr]<distribuição>`
+  - Exemplos:
+
+```{r exdist, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+dnorm(1.96)
+pnorm(1.96)
+qnorm(0.975)
+runif(3, 0, 1) ## 3 números aleatórios entre 0 e 1 da dist. Uniforme
+```
+
+## Teste de Temperatura Normal
+
+  -  Passo 1: formular as hipóteses
+    - $H_0:\mu = 37$ (hipótese nula que vamos testar)
+    - $H_1:\mu \ne 37$ (hipótese alternativa que é o foco de nossa pesquisa)
+    - Teste é de dois lados
+    - Usamos um valor crítico de probabilidade de 0.05 (0.025 de cada lado)
+  - Passo 2: Colecionar Dados e Calcular a Estatística de Teste
+  
+  
+```{r temptest, echo = TRUE, mysize=TRUE, size='\\tiny'}
+describe(temps$tempC)
+## Estatística de teste
+mu <- 37; df <- n - 1
+(tstat <- (xbar - mu) / sqrt(dp^2 / n))
+```
+
+## Passos de Exemplo -- 2
+
+  - Passo 3 -- Transformar estatística em probabilidade
+```{r crittemp, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+2 * pt(tstat, df) # para teste de 2 lados
+```
+
+  - Passo 4 -- Formar conclusão
+    - Valor $p$ é muito pequeno (0.00000024106)
+    - Com certeza, abaixo do nível de 0.05 (nosso valor crítico)
+    - $\therefore$ vamos rejeitar a $H_0$ por causa deste valor pequeno
+    
+  - Interpretação
+    - Só rejeitamos a hipótese nula
+    - Este não quer dizer que aceitamos a alternativa
+    - Só sabemos que a temperatura normal de 37º provavelmente não está totalmente correto
+    
+## Função de Teste t no R
+
+  - R tem uma função que conduz o teste-t sem você precisar calcular a estatística de teste
+
+```{r rttest, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+t.test(temps$tempC, mu = mu, alternative = "two.sided")
+```
+
+# Teste t: 2 Amostras
+
+## Exemplo –- Homicídio Doloso em São Paulo
+
+  - Homicídios e tentativas de homicídio subiram muito na percepção pública em São Paulo no último trimestre de 2012 
+    - depois de uma década de declínio
+  - Realmente aumentaram?
+  - 2 amostras medindo os totais mensais dessas categorias em 2011 e 2012 
+  - Baseado nos dados de SSP do Estado de São Paulo
+    - Arquivo em formato R: "Crimes.PMSP"
+  - `d` é a diferença por mês entre 2012 e 2011
+
+## Passo 1 -- Formular Hipóteses
+
+  - $H_0: d = 0$ (hipótese nula que vamos testar)
+  - $H_1: d > 0$ (hipótese alternativa que é o foco de nossa pesquisa)
+  - Teste unilateral (one-sided: >) 
+  - Valor crítico para o teste: $\alpha$ = 0,05	
+
+## Passo 2 -- Colecionar e se Familiarizar com os Dados
+
+```{r passo2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+load("Crimes.RData")
+describe(Crimes.PMSP$TotHD2011)
+describe(Crimes.PMSP$TotHD2012)
+```
+
+## Médias e Desvios Padrões
+
+```{r passo2a, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+apply(Crimes.PMSP[,8:9], 2, mean)
+apply(Crimes.PMSP[,8:9], 2, sd)
+```
+
+## Boxplot dos Dados
+
+```{r passo2b, echo = TRUE, mysize=TRUE, size='\\scriptsize', fig.height = 3, fig.width = 5}
+boxplot(Crimes.PMSP[,8:9], horizontal = FALSE, xlab = "Ano", 
+        ylab = "Número Mensal", main = "Homicídios Dolosos & Tentativas",
+        names = c("2011", "2012"))
+
+```
+
+## Passo 3 -- Teste t
+
+```{r tt2samp, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+with(Crimes.PMSP, t.test(TotHD2012, TotHD2011, mu = 0, alternative = "greater"))
+```
+
+## Passo 4 -- Interpretação
+
+  - Rejeitar a $H_0$: a diferença entre 2012 e 2011 foi significativa ao nível de $\alpha = 0.05$
+  - O que é o valor certo para a população ainda não sabemos, mas sabemos que é maior que 0
+  - O teste de 2 amostras independentes que fizemos é a versão mais geral dos testes t
+  
+## Anotações
+
+  - `mu = 0`: valor sendo testado é a diferença entre as duas médias ($d$)
+  - `alternative = "greater"` : linguagem para um teste unilateral
+  - `df = 14.388` : porque os tamanhos de amostras não são iguais, calculo dos graus de liberdade precisa contabilizar esta diferença
+  - `p-value = 0.0003111` : valor abaixo o valor crítico de $\alpha = 0.05$
+  
+## Exemplo 2: Expectativa da Vida por Região do Mundo
+
+  - Comparação dos países das Américas com África Subsaariana
+  - Formular as Hipóteses
+    - $H_0: d = 0$ (hipótese nula que vamos testar)
+    - $H_1: d \ne 0$ (hipótese alternativa que é o foco de nossa pesquisa)
+  - Estamos testando a ideia que a expectativa da vida nas 2 regiões é diferente
+    - Não que esta diferença vai em uma direção ou outra
+  - Estamos conduzindo este teste ao nível de confiança de 99% ($\alpha = 0.01$)
+
+## Colecionar Dados
+
+  - Usamos os dados do arquivo "vidadados.RData"
+  - Derivado das bases de dados de Gapminder
+  - 197 países; 3 variáveis
+    - `Pais`
+    - `ExpVida`: Expectativa de Vida em Anos
+    - `Regiao`: Região do mundo (para nos, "Amer" e "SSA")
+
+## Exploração dos Dados
+
+```{r explorvida, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+load("vidadados.RData")
+amerSSA <- vidadados %>% 
+           filter(Regiao %in% c("Amer", "SSA"))
+Desc(amerSSA$ExpVida[amerSSA$Regiao == "Amer"], plotit = FALSE)
+```
+
+##
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/boxvidaamer.png) 
+
+## 
+
+```{r explorvida2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+Desc(amerSSA$ExpVida[amerSSA$Regiao == "SSA"], plotit = FALSE)
+```
+
+##
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/boxvidassa.png) 
+
+##
+
+```{r explorvida3, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+amerSSA %>% group_by(Regiao) %>%
+            summarise_at(vars(ExpVida), funs(mean, sd))
+
+```
+
+## Boxplot das Regiões
+
+```{r boxvida, echo = FALSE, warning = FALSE, mysize=TRUE, size='\\scriptsize', fig.height = 3, fig.width = 5}
+vidagr <- ggplot(amerSSA,aes(x = Regiao, y = ExpVida)) + geom_boxplot()
+vidagr <- vidagr + labs(x = "Região", y = "Expectativa de Vida em Anos",
+                        title = "Expectativa de Vida", 
+                        subtitle = "Americas x África Subsaariana")
+vidagr
+options(scipen = 4)
+```
+
+## Teste t das Regiões
+
+```{r vidat, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+t.test(amerSSA$ExpVida[amerSSA$Regiao == "Amer"], 
+       amerSSA$ExpVida[amerSSA$Regiao == "SSA"], 
+       mu = 0, alternative = "two.sided")
+```
+
+## Expectativa da Vida: Interpretação
+
+  - Rejeitamos $H_0$ que as duas regiões têm expectativas iguais
+  - Porque o teste foi de dois lados, só podemos dizer que não parecem iguais ao nível de 95%
+  - Precisa estudar mais para determinar o grau de diferença e porque existe
+
+## Lembrete: Qualidade dos Testes Estatísticas Dependem dos Números
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/dilbert_invented_nos.png) 
+  
+  
+  
+  
+  
