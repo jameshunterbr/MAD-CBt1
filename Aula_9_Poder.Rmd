@@ -1,0 +1,181 @@
+---
+output: 
+  beamer_presentation:
+    fig_caption: no
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.height = 4, fig.width = 4)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+```{r loadmods, echo = FALSE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(nycflights13)) #pacote de dados
+  suppressPackageStartupMessages(library(forcats))
+  options(scipen = 1000)
+```
+
+# Erros Tipo I e II e Poder Estatístico
+
+## Revisão de Conceitos
+
+  - Hipótese Nula ($H_0$): parâmetro = valor teórico
+  - Hipótese Alternativa ($H_1$): $\ge \:,\: \ne \:,\: \le$ valor teórico
+  - Estatística de teste calculada dos dados assumindo $H_0$ verdade
+  - Valor $p$ – probabilidade de observar valor teórico testado ou um valor mais extremo
+  - Valores $p$ pequenos mostram evidência contra $H_0$
+  - Nível de significância define limite para “quão pequeno é pequeno” de um valor $p$
+  - Anotado como $\alpha$ (letra grega “alfa”)
+  
+## Poder de Um Teste Estatístico
+
+  - $\alpha$ fornece uma ideia do desempenho do teste com amostras multiplas
+  - Se $H_0$ é verdade e $\alpha = 0.01$
+    - Em 1% das amostras, rejeitaremos $H_0$ erroneamente
+    - Em 99% das amostras, não rejeitaremos $H_0$ (decisão correta)
+  - Queremos rejeitar $H_0$ quando é realmente falsa
+  - Se $\alpha$ é pequeno demais, podemos nunca rejeitar $H_0$ mesmo se o valor correto do parâmetro seja muito diferente da $H_0$
+  - **Poder** de um teste é a probabilidade de tomar a decisão correta (i.e., rejeitar $H_0$ quando é realmente falsa)
+  - Um grau de poder mais alto de um teste significa que o teste fica mais sensível
+  
+## Poder -- Applet
+
+  - Wise Power Applet – Claremont Graduate University, Claremont, CA
+  - http://http://wise1.cgu.edu/power_applet/power.asp
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/wise_power.png)
+
+## Poder -- Definição
+
+> Poder é a probabilidade de rejeitar corretamente uma hipótese nula falsa quando uma hipótese alternativa é verdade
+
+## Análise de Poder
+
+  - Permite determinar a probabilidade de um teste de significância estatística rejeitar a hipótese nula
+  - Permite calculo de número de casos ($n$) que seria necessária na amostra para conseguir um certo patamar de poder.
+  - Mais simples: permite que determinamos *a priori* a probabilidade que tomaremos a decisão certa
+  
+## 2 Tipos de Erros Estatísticos
+
+  - **Tipo I** -- Rejeitar $H_0$ quando **verdade**
+    - Ocorre com probabilidade $\alpha$
+    - Uma pessoa inocente condenada falsamente de um crime
+  - **Tipo II** -- Não rejeitar $H_0$ quando **falso**
+    - Ocorre com probabilidade $\beta$
+    - $\beta$ = 1 - poder
+    - Um criminal liberado em erro
+    
+## Resultados Possíveis de Um Teste de Hipótese
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/tipos_erros.png)
+
+## Poder e o Tamanho de Amostra
+
+  - Pesquisador presta atenção a 4 valores importantes:
+    - Tamanho da amostra
+    - Nível de significância ($\alpha$)
+    - Poder
+    - Tamanho de efeito
+  - Se você conhece três, pode calcular o quarto
+  - $n$ e $\alpha$ são sob seu controle direto
+
+## Poder -- Maximização
+
+  - Meta normal: maximizar o poder enquanto manter o nível de significância e minimizar tamanho de amostra 
+  - Quer maximizar probabilidade de achar um efeito verdadeiro enquanto minimizando chance de 
+identificar um efeito que não existe
+  - Fazemos nossos cálculos de poder e tamanho de amostra ao início da pesquisa – no planejamento
+    - Não depois -- já executou experimento. Não pode tentar aumentar casos
+
+## Poder -- Diagrama
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/poder_diag.png)
+
+## Tamanho de Efeito
+
+  - Magnitude da diferença entre da média verdadeira na população e a média hipotetizada na nula relativa ao desvio padrão
+  - Quando efeito de tamanho é maior, poder maior
+    - Existe menos sobreposição entre as duas curvas
+    
+##
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/wise_power.png)
+
+## 
+
+  - Desses valores, mais difícil para entender
+  - Normalmente precisa experiência com pesquisas para aplicar bem
+  - Tabela para guiar calouros estatísticos no uso de tamanho de efeito
+  - Esses são indicações gerais 
+      - Com experiência, vai ganhar melhor ideia
+      
+## Tabela de Tamanhos de Efeito Exemplares
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/effect_size.png)
+
+# Como Calcular o Poder
+
+## Trabalhar com os Dados de Temperatura Normal Humana
+
+```{r tempdados, echo = TRUE, mysize=TRUE, size='\\scriptsize' }
+temps <- read_table("TempData.txt", col_names = FALSE) 
+colnames(temps) <- "tempC"
+suppressMessages(library(psych))
+summary(temps)
+dp <- sd(temps$tempC); paste ("Desvio Padrão =", dp) # desvio padrão
+n <- length(temps$tempC); paste ("n =", n)
+```
+
+## Cálculo de Poder no Pacote `pwr`
+
+  - Pode especificar 3 dos quatro componentes de poder; função calcula o outro
+  
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/poder_params.png)  
+
+  - `d` = tamanho de efeito
+  - `sig.level` = $\alpha$
+  - Deve especificar  `type` e `alternative`
+
+## Executar Função `pwr.t.test`
+
+```{r runpwr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+## Se não tiver carregado o pacote pwr, precisa instalar. 
+## Tira a marca de comentário na próxima linha para ativar 
+# install.packages("pwr")
+## Se já tem, pode ir diretamente ao próximo comando
+library(pwr)
+pwr.t.test(n = n, d = 0.8, sig.level = 0.05, 
+           type = "one.sample", alternative = "two.sided")
+```
+
+## Conclusão sobre Amostra de 130 Pessoas
+
+  - Poder = 1; Amostra exagerada
+  - Vamos testar uma amostra de 10
+
+```{r runpwr2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+pwr.t.test(n = 10, d = 0.8, sig.level = 0.05, 
+           type = "one.sample", alternative = "two.sided")
+```
+
+## Um Pouco Fraco
+
+  - O que seria o tamanho certo da amostra para conseguir um poder = 0.95?
+
+```{r runpwr3, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+pwr.t.test(d = 0.80, sig.level = 0.05, power = 0.95,
+           type = "one.sample", alternative = "two.sided")
+```  
+ 
+  - Uma amostra de 23 seria suficiente para ter todo o poder estatístico que você quer
+  - Pode contar para seu colega montando o experimento que 23 seria um número bom.
