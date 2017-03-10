@@ -490,13 +490,14 @@ marg.erro  <-  z * sqrt(phat*(1 - phat)/1000)
 
   -  Facilita cálculos com a distribuição binomial
 
-```{r}
+```{r binompac, echo = TRUE}
 ## Se não tiver carregado o pacote binom, precisa instalar. 
-## Tira a marca de comentário na próxima linha para ativar e executar
+## Tira a marca de comentário na próxima linha para ativar 
 # install.packages("binom")
 ## Se já tem, pode ir diretamente ao próximo comando
 library(binom)
-binom.confint(sum(tiras), n, conf.level = 0.95, methods = "asymptotic")
+binom.confint(sum(tiras), n, conf.level = 0.95, 
+              methods = "asymptotic")
 ```
 
 # Testes de Hipoteses das Médias
