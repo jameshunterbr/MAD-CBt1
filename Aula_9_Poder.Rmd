@@ -178,4 +178,37 @@ pwr.t.test(d = 0.80, sig.level = 0.05, power = 0.95,
 ```  
  
   - Uma amostra de 23 seria suficiente para ter todo o poder estatístico que você quer
-  - Pode contar para seu colega montando o experimento que 23 seria um número bom.
+  - Pode contar para seu colega montando o experimento que 23 seria um número adequado.
+  
+# Considerações Finais sobre Testes de Hipóteses
+
+## 
+
+  1.  Não interpretar erroneamente os valores de $p$
+    - Valor de $p$ não informa você se $H_0$ é verdade
+    - O que diz é: quão provável serias os dados observados se $H_0$ for verdade
+  2.  A coleta de dados é o passo chave para chegar numa conclusão correta
+  3.  Sempre usar testes de 2 lados senão existe certeza que 1 dos lados não tem interesse nenhum
+  4. Significância estatística $\ne$ significância prática
+  
+##
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/moeda_3amostras.png)
+
+##
+
+  5.  Falta de significância não quer dizer que $H_0$ verdade
+    - Valores grandes de $p$ ocorrem por causa de:
+    - Sorte
+    - Problemas na coleta de dados
+    - $H_0$ realmente falsa
+  6.  Especificar hipóteses antes de coletar os dados
+    - Siga os passos em ordem
+  7.  Testes de proporção e da média precisam
+    - Independência das observações
+    - Distribuição dos estimadores aproximadamente normal
+  8.  Teste t muito robusto
+    - Aguenta todos os outliers fora dos mais extremos
+
+
+
