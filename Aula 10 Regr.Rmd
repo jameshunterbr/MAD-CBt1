@@ -1,0 +1,500 @@
+---
+output: 
+  beamer_presentation:
+    fig_caption: no
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.height = 4, fig.width = 4)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+```{r loadmods, echo = FALSE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(nycflights13)) #pacote de dados
+  suppressPackageStartupMessages(library(psych))
+  suppressPackageStartupMessages(library(broom))
+  suppressMessages(library(mosaic))
+  options(scipen = 10)
+```
+
+# Regressão Linear
+
+## Regressão -- Historia
+
+  - Termo vem de eugenismo “eugenics” de Sir Francis Galton. 
+  - Estudou alturas de famílias
+    - Observou que crianças de pais altos tendiam de ser mais baixo de que os pais e crianças de pais baixos tendiam de ser mais altos        - Chamou a tendência “regressão à média”
+  - Usaremos esses dados clássicos
+  
+## Método de Mínimos Quadrados
+
+  - Solucionamos com o método *Mínimos Quadrados* 
+    - Inventado por Carl Friedrich Gauss
+    - Método minimiza as divergências entre os valores lineares previstos e os valores dos dados
+    - Consegue o melhor relação entre a variável de resultado e as variáveis prognosticas
+  - Por enquanto, vamos restringir o modelo para forma linear
+    - Outras formas existem
+
+## Proposito
+
+> Prever um resulatdo numa variável dependente baseado em uma ou mais variáveis independentes
+  
+  - Uma -- regressão linear *simples*
+  - Mais -- regressão linear *múltipla*
+  
+## Visualização de Regressão
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/regress_IBX.png)
+
+
+## Linha Reta
+
+$$y=\beta_1 x + \beta_0$$
+
+  - $\beta_1$ = inclinação da linha (*slope*)
+  - $\beta_0$ = intercepto (onde cruza o eixo $y$)
+  - Os dois parâmetros da regressão
+  - Com estes parâmetros, Mínimos Quadrados acha a reta que melhor prevê o valor da variável dependente dado o valor de independente
+  
+## “Melhor” Quer Dizer “Bom”?
+
+  - Apesar de ser a melhor maneira de prever $y$, possível que não descreve bem $y$
+  - **Bom** depende dos dados
+  - **Melhor** depende do método
+  
+## Equação de Regressão
+
+$$Y_i=\beta_0+\beta_1X_i+\epsilon_i$$
+
+  - $Y_i$ = valor de variável dependente
+  - $\beta_0$ = intercepto
+  - $\beta_1$ = inclinação da reta de regressão
+  - $X_i$ = valor da variável independente
+  - $\epsilon_i$ = termo de erro de cada caso
+  
+## Equação de Regressão - Estimação
+
+$$\hat{Y}_i=b_0+b_1X_i+e_i$$
+
+  - $\hat{Y}_i$ = valor de variável dependente
+  - $b_0$ = intercepto
+  - $b_1$ = inclinação da reta de regressão
+  - $X_i$ = valor da variável independente
+  - $e_i$ = termo de erro de cada caso
+  
+##  Termo de Erro ($\epsilon$)
+
+  - Também chamado **resíduo** 
+  - Responsável pela variabilidade em $y$ que a reta não consegue explicar
+  
+## Mínimos Quadrados
+
+  - Faz o cálculo que minimiza o quadrado da soma dos erros
+  - Erros = resíduos = diferenças entre o valor *observado* e o valor *esperado*
+
+$$min\sum(y_i-\hat{y}_i)^2$$
+
+  - $y_i$ = valor observado da variável dependente 
+  - $\hat{y}_i$ = valor estimado da variável dependente
+
+## Basta de Teoria -- Exemplo
+
+  - A base de dados de Galton sobre altura nas famílias
+  - Pergunta é se filhos/as são mais altos ou mais baixos de que os pais
+  - Mediu 898 filhos/as em 197 famílias
+  - Base de dados originais (em papel) fica na University College, London (UCL)
+  
+## Variáveis
+
+```{r famvars, echo = FALSE, mysize=TRUE, size='\\scriptsize'}
+suppressMessages(library(mosaic))
+data(Galton)
+str(Galton)
+```
+
+  - `height`, `father`, `mother` todos medem altura em polegadas
+  
+## Foco em Pais e Filhos
+
+```{r filhos, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+boys <- Galton %>% filter(sex == "M") %>% select(-family, -mother, -sex, -nkids)
+glimpse(boys)
+```
+
+  - `father` é a variável independente
+  - `height` é a variável dependente
+  - Queremos ver se a altura do pai prevê a altura do filho
+  
+## Pai/Filho -- Gráfico de Dispersão
+
+```{r scatpai, echo = TRUE, mysize=TRUE, size='\\scriptsize', fig.height = 3, fig.width = 5}
+grpf <- ggplot(data = boys, aes(x = father, y = height)) + geom_point(shape = 20) + geom_rug()
+grpf <- grpf + labs(x = "Altura do Pai", y = "Altura do Filho", title = "Alturas em Polegadas")
+grpf
+```
+
+##
+
+```{r pftend, echo = FALSE, fig.height = 3, fig.width = 5}
+grpf2 <- grpf + geom_smooth(method = "lm", se = FALSE, color = "red")
+grpf2
+```
+
+## O Que Podemos Dizer Agora?
+
+  - **Parece** que mais altos os pais, mais altos os filhos
+  - Vamos olhar nas estatísticas descritivas das 2 variáveis 
+    - mais correlação
+
+```{r descpf, echo = FALSE, mysize=TRUE, size='\\scriptsize'}
+describe(boys)
+paste("Coeficiente de Correlação:", with(boys, round(cor(father, height), 3)))
+```
+
+## O Que É a "Correlação"?
+
+  - *Coeficiente de Correlação* mede o grau da associação linear entre 2 variáveis
+  - Sempre cai entre -1 e +1
+    - -1 significa uma relação perfeitamente inversa (quando $x$ sobe, $y$ desce pela mesma proporção)
+    - 0 significa que não existe uma relação linear entre as 2 variáveis
+    - +1 significa uma relação perfeitamente positiva (quando $x$ sobe, $y$ sobe pela mesma proporção)
+  - V.S.S: quando tem correlação positiva, tem inclinação da linha de tendência positiva, e vice versa
+  
+## Para Calcular a Linha de Regressão -- O Que Queremos?
+
+  - Uma linha que minimiza a diferença entre $y_i$ e $\hat y$ 
+  - Precisamos trabalhar com o quadrado da diferença 
+    - para não ter uma soma de 0
+
+```{r yhatgr, echo = FALSE, fig.height = 2.6, fig.width = 5}
+set.seed(1946)
+boyscoef <-  coef(lm(height~father, data  = boys))
+int <- boyscoef[1]; inc <- boyscoef[2] 
+x <- boys %>% 
+     filter((height >= 66 & height < 71) & (father >= 67 & father < 71)) %>% 
+     sample_n(5) %>% 
+     mutate(ypred = int + inc * father)
+xplot <- ggplot(data = x, aes(x = father, y = height)) 
+xplot <- xplot + geom_point(shape = 19, colour = "darkgreen")
+xplot <- xplot + geom_abline(aes(intercept = int, slope = inc), colour = "darkred")
+xplot <- xplot + geom_segment(aes(x = father[3], y = height[3], xend = father[3], 
+                                  yend = ypred[3]), colour = "blue", 
+                              arrow = arrow(length = unit(0.3,"cm")))
+xplot <- xplot + geom_point(aes(x = father[3], y = ypred[3]), 
+                            shape = 19, color = "blue" )
+xplot <- xplot + annotate(geom = "text", x = 68.2, y = 68.7, 
+                          label = "y-hat")
+xplot <- xplot + annotate(geom = "text", x = 68.2, y = 66.8, label = "y(i)")
+xplot
+```
+
+## SSE -- Um Componente do Soma de Quadrados (SST)
+
+  - $SST = SSE + SSR$
+  - SST -- Total
+  - SSE -- Relacionados aos Erros/Resíduos
+  - SSR -- Relacionados/Explicados pela regressão
+
+## SST -- O Que Representa?
+
+  - A variância total é a diferença entre o valor do modelo para cada valor de X e a média dos valores da variável dependente ($\hat{y}$)
+
+```{r SSTplot, echo = FALSE, fig.height = 2.6, fig.width = 5}
+xplot2 <- xplot + geom_hline(yintercept = mean(boys$height), color = "orange")
+xplot2 <- xplot2 + geom_segment(aes(x = father[3], y = ypred[3], 
+                                    xend = father[3], 
+                                    yend = mean(boys$height)), 
+                                colour = "green", 
+                                arrow = arrow(length = unit(0.3,"cm")))
+xplot2 <- xplot2 + annotate(geom = "text", x = 67.7, y = 68.9, 
+                            label = "SSR", color = "darkgreen")
+xplot2 <- xplot2 + annotate(geom = "text", x = 67.5, y = 69.3, label = "y-bar")
+xplot2 <- xplot2 + annotate(geom = "text", x = 67.7, y = 68, 
+                            label = "SSE", color = "darkblue")
+xplot2 <- xplot2 + geom_segment(aes(x = father[3] + 0.05, y = height[3], 
+                                    xend = father[3] + .05, 
+                                    yend = mean(boys$height)), 
+                                colour = "red", 
+                                arrow = arrow(length = unit(0.3,"cm")))
+xplot2 <- xplot2 + annotate(geom = "text", x = 68.3, y = 68, 
+                            label = "SST", color = "darkred")
+xplot2
+```
+
+## Soma dos Quadrados
+
+  - Referimos a esse soma dos quadrados que queremos minimizar como **SSE** 
+    - Error sum of squares
+  - SSE como componente da soma dos quadrados total
+    - SSE -– soma dos quadrados relacionados ao resíduo  
+    - SSR -– soma dos quadrados relacionados a regressão
+  - Expressão de SSE
+  
+$$ SSE=\sum_{i=1}^{n}(y_i - \hat{y})^2 $$
+
+$$ SSE=\sum_{i=1}^{n}(y_i-\beta_0-\beta_1 x_i)^2 $$
+
+
+
+## Para Determinar a Formula para $\beta_0$ e $\beta_1$
+
+  - Para minimizar a SSE (determinar a linha mais eficiente), precisamos usar cálculo
+  - Fazer a derivativo parcial com respeito a $\beta_0$ e $\beta_1$
+  
+$$ \frac{\partial}{\partial \beta_0}SSE=\frac{\partial}{\partial \beta_1}SSE=0$$
+
+  - Chamadas as equações normais
+  - Confiamos nos softwares para calcular os parâmetros da equação
+  
+## Função em R
+
+  - Função `lm` ("linear model")
+  - `lm(formula, data, subset, weights, na.action, method = "qr", model = TRUE, x = FALSE, y = FALSE, qr = TRUE, singular.ok = TRUE, contrasts = NULL, offset, ...)`
+  - Os importantes são `formula`, `data`, `subset`, `weights`, `na.action`
+  - `formula`:  onde mostra quais variáveis você está modelando
+    - Variável dependente vem primeiro
+    - Separada da independente(s) por “ ~ ”
+    - Para os `boys`: `height ~ father`
+    - `data`: data frame  ou tibble que contem as variáveis
+    - `subset`, `weights`: parâmetros que permitem que você customizar tratamento das variáveis
+    - `na.action`: como vai tratar os dados missing na base de dados
+
+## Função Aplicada aos Pais e Filhos
+
+  - Função `lm` produz uma lista de 12 itens em um formato especial
+
+```{r pfrun, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+fit1 <- lm(height ~ father, data = boys)
+summary(fit1)
+```
+
+## O Que Diz o Modelo
+
+$$ \hat{y} = 38.259 + 0.448x$$
+
+  - Se o pai tivesse 0 altura, o filho teria 38.259 polegadas de altura
+    - Não faz sentido prático, mas estabelece a base para calculo de altura
+    - Para cada polegada incremental da altura do pai, o filho seria 0.448 polegadas mais alto
+
+## Extrair os Valores dos Coeficientes
+
+  1.  Usar `broom::tidy`
+  
+```{r tidybr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+broom::tidy(fit1) %>% kable()
+
+```
+
+  2.  Usar `coef`
+  
+```{r coefbr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+coef(fit1) 
+```
+
+## Previsões de Novos Valores
+
+  - Pode usar o modelo para prever novos valores da altura dos filhos
+  - Usar `broom::augment`
+
+```{r prevbr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+fit1 %>% broom::augment(newdata = data_frame(father = 72))
+```
+
+# O Que Significa o Modelo? Como Interpretar Ele?
+
+## Existe Relação Entre Variáveis Independente e Dependentes?
+
+$$Y_i=\beta_0+\beta_1X_i+\epsilon_i$$
+
+  - Se $\beta_1$ (inclinação da linha) for 0, o que seria a equação?
+  
+$$Y_i=\beta_0+\epsilon_i$$
+
+  - X desaparece
+  - Relação entre Y e X não existe
+    - Só tem intercepto e erro
+  - Faz possível teste eficiente de existência ou não de uma relação entre X e Y
+  - Cria uma hipótese nula de $H_0: \beta_1 = 0$
+
+## Teste de Hipótese Nula
+
+  - Vamos fazer uma simulação de hipótese nula
+  - Se a nula é correta, qualquer altura do filho podia ter ocorrido com qualquer altura do pai.
+  - Podemos calcular o modelo de regressão 5.000 vezes com valores de todo a base de alturas dos filhos
+  - Como resultado, vamos focar nos valores da inclinação, $\beta_1$
+  - Depois, nós vamos comparar nosso valor de $\beta_1$ observado e ver onde cai na distribuição dos valores simulados
+  
+## Histograma dos Modelos
+
+```{r histmod, echo = FALSE, fig.height = 3, fig.width = 5}
+set.seed(1946)
+homodelos <- replicate(5000, (lm(shuffle(height) ~ father, data = boys) %>% coef()))
+homodelos <- tibble(homodelos[2,])
+colnames(homodelos) <- "father"
+modgr1 <- ggplot(homodelos, aes(x = father)) 
+modgr1 <- modgr1 + geom_histogram(color = "white", bins = 20)
+modgr1 <- modgr1 + labs(x = "Pais", y = "Número")
+modgr1
+```
+
+## Histograma com Valores Abaixo/Acima do Valor da Amostra
+
+```{r histmod2, echo = FALSE, fig.height = 2.6, fig.width = 5}
+paste("Número de simulações com beta1 >= obs:", 
+      sum(homodelos$father >= inc))
+modgr2 <- ggplot(homodelos, aes(x = father, fill = (father >= inc))) 
+modgr2 <- modgr2 + geom_histogram(color = "white", bins = 20)
+modgr2 <- modgr2 + labs(x = "Pais", y = "Número", fill = "pai >= obs")
+modgr2
+```
+
+## O Valor-p da Inclinação ($\beta_1$)
+
+  - Porque **nenhuma** das simulações produziu um valor superior ao observado (`r round(inc,3)`)
+    - Pode concluir que o valor-p deste teste é 0. 
+    - Não parece existir nenhuma chance que a inclinação = 0
+  - Assim, rejeitamos a hipótese nula e concluir que uma relação linear entre as alturas dos pais e filhos realmente existe.
+  
+## Premissas de Regressão Linear
+
+  1.  Todas as variáveis devem ter a mesma variância
+    - Gráfico de resíduo deve evitar padrões indo de esquerda até direta
+  2.  Todas as observações, resíduos e variáveis independentes: todos devem ser independentes
+    - Gráfico de resíduo não deve mostrar um padrão sinuoso
+  3.  Resíduos têm uma distribuição perto a normal
+    - Gráfico "qq" dos resíduos padronizados
+
+## Gráfico de Resíduos
+
+  - Gráfico que mostra o valor previsto pelo modelo ("fitted value") vs. o resíduo
+  - Uso da função `broom::augment()`
+    - Eficiente para extrair os valores utilizados nos testes dos modelos
+  
+```{r grresid, echo = FALSE, fig.height = 2.4, fig.width = 5}
+mods <- augment(fit1) 
+residgr <- ggplot(data = mods, mapping = aes(x = .fitted, y = .resid))
+residgr <- residgr + geom_point()
+residgr <- residgr + geom_hline(yintercept = 0, color = "blue")
+residgr <- residgr + labs(x = "Valores Previstos pelo Modelo", 
+                          y = "Resíduos")
+residgr
+
+```
+
+  
+## Importância dos Resíduos
+
+  - Pode usar os erros/resíduos para verificar se as premissas da regressão foram respeitadas
+  - Não devem mostrar um padrão linear
+
+## Gráfico Q-Q
+
+  - Verifica a normalidade dos resíduos
+    - Mais perto a uma linha reta, melhor o "fit" com uma distribuição normal
+
+```{r qqfit, echo = TRUE, fig.height = 2.6, fig.width = 5}
+grqq <- ggplot(data = mods, aes(sample = .resid))
+grqq <- grqq + stat_qq()
+grqq <- grqq + labs(x = "Quantiles Teóricos", 
+                    y = "Quantiles da Amostra")
+```
+
+## 
+
+```{r plotqq, echo = FALSE, fig.height = 2.6, fig.width = 5}
+grqq
+```
+
+
+## Gráficos Q-Q Também Disponível Diretamente em Base R
+
+```{r baseqq, echo = TRUE, eval = FALSE, }
+qqnorm(boys$height)
+qqline(boys$height, col = 2, lwd = 2)
+grid()
+```
+
+##
+
+```{r plotbaseqq, echo = FALSE, fig.height = 2.8, fig.width = 5}
+qqnorm(boys$height)
+qqline(boys$height, col = 2, lwd = 2)
+grid()
+```
+
+
+## Teste-F das Variâncias do Modelo
+
+  - Teste-F é um teste que verifica que as variâncias das variáveis são perto de iguais
+  - Utiliza a Distribuição F
+    - Tem 2 graus de libera de como parâmetros
+  - Serve como um teste de significância total de um modelo
+  - Produzido pelo função `Summary` da função `lm`
+
+## Teste-F do Modelo das Alturas Pai-Filho
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/f_test.png)
+
+## Resumo de Soma dos Quadrados
+
+  - Soma Total de Quadrados
+
+$$SST=\sum(y_i-\bar y)^2$$
+  
+  - Soma dos Quadrados dos Erros
+  
+$$SSE=\sum(y_i - \hat y)^2$$
+
+  - Soma dos Quadrados de Regressão
+  
+$$SSR=\sum(\hat y_i - \bar y)^2=SST - SSE$$ 
+  
+## $R^2$ -- Coeficiente de Determinação
+
+  - Medida de quanto a linha de regressão explica a variância em Y
+  - Relação entre a SSR e a SST
+  
+$$R^2=\frac{SSR}{SST}$$
+
+  - Calculado pelo `lm`
+    - visível em `Summary`
+  - Varia entre 0 e 1
+  - $\sqrt{R^2}=r$ (coeficiente de correlação)
+  
+## $R^2$
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/f_test.png)
+
+## Significância de $R^2$
+
+  - Se 100% da variância ser explicado pela regressão
+  - $SSR = SST$ 
+  - $\therefore\:R^2 = SST/SST = 1$
+  - Variância completamente explicado pela regressão
+  - Em geral, o grau em que a regressão explica a variância no modelo
+
+# Dois Gráficos Mais Avançados
+
+## Função `plot` para Objetos `lm`
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/plot4_reg.png)
+
+
+## Função `qqPlot()` do Pacote `car`
+
+```{r carplot, echo = FALSE, fig.height = 3, fig.width = 5}
+car::qqPlot(fit1)
+```
+
+## Próxima Aula
+
+  - Análise mais profundas de nossos modelos de regressão
+  - Regressão com múltiplas variáveis independentes
+  - Regressão como modelo de machine learning
