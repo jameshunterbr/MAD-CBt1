@@ -1,0 +1,264 @@
+---
+title: "Matéria de Análise de Dados – Ciências Biomédicas"
+subtitle:  "Aula 11 -- Regressão Múltipla"
+author: "James Hunter"
+date: "24 de março de 2017"
+output: pdf_document
+---
+
+Nesta aula, vamos considerar **regressão múltipla**, ou seja, a inclusão de duas ou mais variáveis independentes na analise. Esta é uma extensão direta do que aprendemos na aula sobre regressão simples e regressão polinomial. 
+
+
+# Regressão Múltipla
+
+Vamos usar o dataset "Prestige" que descreve quais ocupações (entre os 102 no dataset) em Canadá têm as melhores reputações entre Canadenses e porque. Este dataset se encontra no pacote `car`, ligado ao texto sobre regressão **An R Companion to Applied Regression** de John Fox e Sanford Weisberg.
+
+As variáveis no dataset são os seguintes:
+
+* `education` : The average number of years of education for occupational incumbents in the 1971 Census of Canada. 
+
+* `income` : The average income of occupational incumbents, in dollars, in the 1971 Census. 
+
+* `women` : The percentage of occupational incumbents in the 1971 Census who were women.
+
+* `prestige` : The average prestige rating for the occupation obtained in a sample survey conducted in Canada in 1966. 
+
+* `census` : The code of the occupation in the standard 1971 Census occupational classification. 
+
+* `type` : Professional and managerial (prof), white collar (wc), blue collar (bc), or missing (NA).
+
+Nós queremos usar esses dados para desenvolver um modelo que mostra como nós podemos predizer quais profissões têm o maior prestígio.
+
+# Carregar os Pacotes Necessários
+
+```{r loadmods, echo = TRUE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(car))
+  suppressPackageStartupMessages(library(psych))
+  suppressPackageStartupMessages(library(broom))
+  suppressPackageStartupMessages(library(nortest))
+  suppressMessages(library(mosaic))
+  options(scipen = 5)
+```
+
+Como sempre, começamos com uma revisão dos dados:
+
+# Revisão dos Dados
+
+```{r loadfilesdata}
+data("Prestige")
+occ <- rownames(Prestige)
+head(Prestige)
+summary(Prestige)
+Desc(Prestige[,c(1:4,6)], plotit = TRUE) # Não precisa census
+prestnorm <- unlist(ad.test(Prestige$prestige)[2])
+educnorm <- unlist(ad.test(Prestige$education)[2])
+incnorm <- unlist(ad.test(Prestige$income)[2])
+mulhnorm <- unlist(ad.test(Prestige$women)[2])
+paste("Normalidade de prestige per Anderson-Darling (valor-p):",
+      round(prestnorm,3))
+paste("Normalidade de education per Anderson-Darling (valor-p):",
+      round(educnorm,3))
+paste("Normalidade de income per Anderson-Darling (valor-p):",
+      round(incnorm,3))
+paste("Normalidade de women per Anderson-Darling (valor-p):",
+      round(mulhnorm,3))
+cor(Prestige[,c(4,1:3)])
+car::scatterplot(prestige ~ income, data = Prestige, id.n = 4, labels = occ)
+scatterplot(prestige ~ education, data = Prestige, id.n = 4, labels = occ)
+scatterplot(prestige ~ women, data = Prestige, id.n = 4, labels = occ)
+scatterplotMatrix(~ prestige + income + education + women,
+                  data = Prestige, span = 0.7)
+```
+
+NB., os parâmetros `id.n` e `labels` na função `scatterplot` permitem a identificação automática dos pontos extremos. Pode aprender mais sobre essas opções na página help da função `scatterplot`.
+
+Podemos ver nesta analise exploratória que as variáveis numéricas `prestige` e `education` têm distribuições aceitavelmente normal. Entretanto, as variáveis `income` e `women` têm uma assimetria bastante positiva (a direta). Podemos ver esse problema igualmente no gráfico da distribuição da variável que no scatterplot contra prestígio, onde a falta de linearidade indica que uma transformação pode ajudar dar esta variável um formato que cairia dentro das premissas da regressão.
+
+Podemos anotar também, que `education` e `income` têm correlações bastante altas com a variável dependente `prestige`, mas a porcentagem da mulheres em um grupo ocupacional tem pouco relação (-0,118). Assim, quando construímos o modelo, esta variável explicará pouco da variância. A transformação não vai mudar bastante esta falta de relação.
+
+O `scatterplotMatrix` é uma forma alternativa de apresentar as quatro variáveis numéricas. A função vem da pacote `car` mas uma outra versão fica na pacote `lattice`.
+
+## Transformação da Variável `women`
+
+Há duas funções candidatas para transformação de `women`, logarítmica e logit. As duas são variantes da mesma ideia básica. Com a logarítmica, nós simplesmente tomamos o logaritmo dos valores da variável. É importante de lembrar que para os fins de estatística, os logaritmos nas bases diferentes (neperianos, comuns, ou base 2) são equivalentes. Aqui, nós vamos usar o logaritmo de base 10 (comum). Eles todos mudam a escala da variável. Este o que fazemos quando calculamos um fold change da contagem do vírus HIV. 
+
+Com o logit, aplicamos a função seguinte para a variável:
+$$logit(x) = log_e\frac{x}{1 - x}$$
+
+Este função se aplica para variáveis que têm valores entre 0 e 1. 
+Vamos experimentar com essas duas transformações e ver o efeito delas.
+
+### Transformação Log
+
+Nesta transformação, vamos criar uma nova variável (usando `mutate` do pacote `dplyr`) do logaritmo de `women`. Mas, primeiro devemos resolver um problema.
+
+```{r log1}
+logw <- log10(Prestige$women)
+Desc(logw, plotit = TRUE)
+```
+
+Este cálculo mostra que não podemos calcular um log para todos os valores de `women`. O logaritmo de 0 não existe (R retorna um valor de `-Inf`) e no dataset, `women` mostra 5 profissões em que não tem presença nenhuma das mulheres.
+
+Profissões Sem Mulheres
+
+```{r nowomen, echo = FALSE}
+Prestige[Prestige$women == 0,]
+```
+
+Nós podemos lidar com este problema facilmente. Nós vamos aumentar  `women` por um pequeno valor fixo, 0,025. Assim, não teremos os logaritmos impossíveis e podemos usar o cálculo. Antes de pôr esta transformação definitivamente no dataset, vamos fazer mais um experimento.
+
+```{r log2}
+logw <- log10(Prestige$women + 0.025)
+Desc(logw, plotit = TRUE)
+```
+
+Esta vez, temos um resultado bem melhor. Todos os valores têm logaritmos e o boxplot abaixo da curva de densidade mostra que a distribuição dentro da IQR (interquartile range) fica simétrica.
+
+### Transformação Logit
+
+Agora, vamos experimentar com a transformação logit. O pacote `car` tem uma função `logit` que calcula diretamente a transformação usando a formula acima. Porque a função vai tomar um logaritmo, precisamos de novo corrigir os valores de `women` somando 0.025 aos valores existentes. 
+
+A função logit precisa também ter os números entre 0 e 1. Então, nós vamos dividir `women` por 100 para pôr de volta em termos decimais invés das porcentagens em que eles aparecem no dataset.
+
+```{r logit1}
+logitw <- car::logit((Prestige$women + 0.025)/100)
+Desc(logitw, plotit = TRUE)
+```
+
+O gráfico seguinte mostra um resumo das transformações 
+
+```{r sumtrans}
+par(mfrow = c(1, 3))
+with(Prestige, {
+   plot(density(women, from = 0, to = 100),
+        main = "(a) Original")
+   plot(density(logw), main = "(b) Logarítmico")
+   plot(density(logitw), main = "(c) Logit")
+})
+par(mfrow = c(1, 1))
+```
+
+Neste caso, as duas transformações produziram resultados semelhantes e podemos trabalhar com a transformação logit.
+
+## Transformação da Variável `income`
+
+Dado a experiência que temos com a distribuição da renda numa população, podemos usar a transformação logarítmico para nossa variável `income`.
+
+```{r loginc}
+loginc <- log2(Prestige$income)
+Desc(loginc, plotit = TRUE)
+occ <- rownames(Prestige)
+scatterplot(prestige ~ loginc, data = Prestige, labels = occ)
+```
+
+Agora, a distribuição da renda tem um formato muito mais normal e a transformação tira o formato de segundo grau que podíamos ver no scatterplot da renda não modificado.
+
+Podemos inserir essas transformações em nosso dataset e olhar de novo nas correlações e o `scatterplotMatrix` das variáveis. Anote que preciso pôr de volta os nomes para as profissões porque `mutate` tira eles quando cria novas colunas.
+
+```{r insert}
+Prestige <- Prestige %>% mutate(womenlogit = logit((women + 0.025)/100),
+                    inclog = log2(income)) 
+rownames(Prestige) <- occ
+cor(Prestige[,c(4,1,7:8)])
+scatterplotMatrix(~ prestige + inclog + education + womenlogit,
+                  data = Prestige, span = 0.7)
+```
+
+# Regressão com os Regressores Numéricos
+
+Nós vamos começar com um modelo de regressão com somente os variáveis numéricos: `income` (modificada a `inclog`), `education` e `women` (modificada a `womenlogit`). O quarto regressor, `type` é uma variável categórica e precisa de tratamento especial que explicarei na próxima parte deste aula.
+
+Para construir o modelo, nós vamos usar os mesmos símbolos que na última aula (regressão polinomial) na formula: "~" (til) para separar a variável dependente e as independentes. E, usamos o "+" para separar as variáveis independentes. Existem outros símbolos que podem ser usados, mas relatam para tipos de modelos mais avançados. Lembre que a notação de formula em R **não** demanda que você especifica o dataframe antes de todas as variáveis porque a função `lm` reconhece o data frame no parâmetro `data =`.
+
+```{r mod1}
+fit1 <- lm(prestige ~ inclog + education + womenlogit, data = Prestige)
+summary(fit1)
+anova(fit1)
+qqPlot(fit1)
+par(mfrow=c(2,2))
+plot(fit1)
+par(mfrow=c(1,1))
+```
+
+Os resultados mostram que o modelo descreve bem a relação entre prestígio e as previsores. Como pode ser visto na quadra ANOVA, a variável `education` tem a melhor relação a variável dependente `prestige` com a valor t de 10.247 seguida pela variável transformada da renda, `inclog`. Finalmente, a contribuição da participação feminina tem efeito insignificante sobre prestígio de uma ocupação (p = 0.309). 
+
+Os gráficos analíticos mostram que não tem problemas com as premissas de linearidade, independência e normalidade no modelo.
+
+Então este modelo diz:
+prestige = -105.42 + 9.00 * $log_2$(income) + 3.78 * education + 0.62 * participação feminina
+
+Este modelo explica aproximadamente 83% de variância dos dados.
+
+## Opção - Modelo Sem Variável `women`
+
+Porque a variável women parece de contribuir pouco para o modelo, vamos considerar uma versão sem esta variável
+
+```{r mod2}
+fit2 <- lm(prestige ~ inclog + education, data = Prestige)
+summary(fit2)
+anova(fit2)
+qqPlot(fit2)
+
+```
+
+Como indica os $R^2$, o modelo fica o mesmo sem a variável `women`. Seguindo a dica da Navalha de Ockham (se você ter um número menor dos termos e não perder informação, melhor), vamos deixar fora das versões futuros.
+
+# Inclusão da Variável `type` no modelo
+
+A variável `type` é nominal e tem três categorias: `bc` (operário), `prof` (profissional-executivo) e `wc` (colarinho branco). Nós podemos mostrar o efeito desta variável em dois gráficos:  o primeiro mostrando a distribuição de `prestige` para cada grupo e o segundo mostrando a interação entre `education`, `inclog` e `type`, retratando `type` em cores.
+
+```{r typegraf}
+plot(Prestige$prestige ~ Prestige$type)
+qplot(education, inclog, data = Prestige, col = as.factor(type))
+
+```
+
+Estes dois gráficos claramente mostram que o prestígio de cada `type` é bastante diferente. O scatterplot também mostra que type tem uma forte relação com renda e com educação porque os três cores agrupam em três áreas distintas do espaço (faltando só uma pouca sobreposição). Uma das coisas que tentamos de fazer com regressão e outros modelos estatísticos é definir claramente essas diferenças entre grupos para ajudar nos processos de previsão e classificação.
+
+A inclusão das variáveis nominais é possível e até muito importante (se a variável seja gênero ou raça, por exemplo). Entretanto, precisa um pouco de cuidado na especificação deles no modelo.
+
+A primeira coisa que precisamos fazer é acertar que a variável `type`, nossa variável nominal, fica na forma de um `factor` em R. Neste caso, a variável vem nessa forma. Se fosse necessário para modificar ela para um `factor`, precisa chamar a função `factor` para fazer: `type <- factor(type)`.
+
+Quando incluímos `type` numa formula de modelo em R, o programa automaticamente cria regressores chamados `contrasts` para os níveis da variável. Podemos ver esses `contrasts` no formato do matriz do modelo do `type`, ou seja, o formato em que o programa trata dos níveis da variável. Aqui, mostro só alguns casos. (Lembre que regressão está calculado no formato de matrizes usando álgebra linear dentro do programa. Esta é uma das poucas vezes que vou mostrar o que acontece dentro da "caixa preta".)
+```{r modmat}
+kable(with(Prestige, model.matrix(~ type)[c(1:5, 50:55),]))
+```
+
+A primeira coluna do matriz é todos 1's que representa o intercepto do modelo. As outras colunas representam variáveis "dummy" que o software criou para executar o modelo. Normalmente, quando temos fatores, nós usamos uma técnica de estatística chamado Analise de Variância (ANOVA). Mas, ANOVA e regressão são primas muito próximas e podemos executar nosso modelo no formato de regressão.
+
+```{r mod3}
+fit3 <- lm(prestige ~ inclog + education + type, data = Prestige)
+summary(fit3)
+anova(fit3)
+par(mfrow=c(2,2))
+plot(fit3)
+par(mfrow=c(1,1))
+qqPlot(fit3)
+```
+
+Este modelo não mudou o resultado final muito. O $R^2$ aumentou um pouco e todas as três variáveis parecem de ter um efeito significativo no modelo. Realmente, inclui a variável nominal para mostrar que pode ser feito. Mas, baseado em o que vimos nos gráficos anteriores, ela parece de dizer muito da mesma coisa que renda e educação. Então, este representa um caso em que tem "autocorrelação", ou seja, as variáveis não são realmente independentes porque expliquem o mesmo comportamento. Por exemplo, ocupações "blue-collar" normalmente ganham menos que uma ocupação "profissional". Então as duas variáveis estão explicando o mesmo fenômeno.  Autocorrelação é um efeito estatístico que pode estragar os modelos de regressão, mas neste caso estava benigna.
+
+A função `aov` produz uma tabela ANOVA. Esta é exatamente a mesma que a regressão múltipla produz. Eles são os mesmos modelos.
+
+Nós podemos avaliar a relação entre renda e anos de educação e `type` por incluir no modelo diretamente a interação entre essas variáveis. Usamos o símbolo ":" (dois pontos) para criar um termo para interação no modelo. Vamos olhar primeiro nas variáveis "dummy" que a regressão criará para `education` and `type` e depois executar o modelo com os dois novos termos de interação.
+
+```{r mod5}
+model.matrix(~ type + education + education:type, data = Prestige)[c(1:5, 50:55),]
+fit5 <- lm(prestige ~ inclog + education + type + 
+              inclog:type + education:type, data = Prestige)
+summary(fit5)
+anova(fit5)
+par(mfrow=c(2,2))
+plot(fit5)
+par(mfrow=c(1,1))
+qqPlot(fit5)
+```
+
+Como nós podemos ver na tabela dos coeficientes, `inclog` agora é tem o maior valor *t* e representa a variável que melhor explique o resultado `prestige`. Por causa do impacto das interações entre `type` e `education`, essas variáveis parecem de perder muito força na explicação de como Canadenses avaliam o prestígio das ocupações. O modelo agora diz que alguém com uma ocupação que renda muito vai ser mais bem pensado que alguém que tem uma ocupação que demanda muitos anos de escolaridade mas não renda tanto. (Pense em nos!) Agora, o modelo está tomando em conta a autocorrelação entre `education` e `type`. Assim, temos uma visão mais sofisticada de prestígio que nos modelos anteriores. O valor p da interação entre `inclog` e a categoria `prof` do `type` reforça essa ideia que as ocupações com o maior prestígio são aquelas que são classificadas como profissional **e** rendam mais.
+
+Com regressão podemos construir modelos que vão bem além as análises simplórias que estudamos antes.
+
+Na próxima aula, apresentarei a **regressão logistica**, um tipo de regressão que podemos usar quando temos uma variável dependente binária. Por exemplo, quando queremos prever se um paciente tem ou não tem infecção de HIV, nós podemos avaliar vários fatores quantitativos e qualitativos para estimar a probabilidade que o paciente tem o vírus (mesmo antes de receber os resultados do testes de carga viral e das células T CD4+).
