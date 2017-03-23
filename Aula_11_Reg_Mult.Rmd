@@ -88,7 +88,18 @@ Há duas funções candidatas para transformação de `women`, logarítmica e lo
 Com o logit, aplicamos a função seguinte para a variável:
 $$logit(x) = log_e\frac{x}{1 - x}$$
 
-Este função se aplica para variáveis que têm valores entre 0 e 1. 
+Este função se aplica para variáveis que têm valores entre 0 e 1. A curva de `logit` tem a forma de um "S" que permite conversão de valores entre 0 e 1 em uma linha continua, como a figura abaixo mostra.
+
+```{r logitcurve}
+logitcurve <- tibble(x = seq(.01, .999, .001), logitx = logit(x))
+logitgr <- ggplot(data = logitcurve, mapping = aes(x = x, y = logitx))
+logitgr <- logitgr + geom_line()
+logitgr <- logitgr + labs(x = "X", y = "logit(x)")
+logitgr
+```
+
+
+
 Vamos experimentar com essas duas transformações e ver o efeito delas.
 
 ### Transformação Log
