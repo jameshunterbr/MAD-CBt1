@@ -58,6 +58,7 @@ Primeiro, nós vamos considerar um caso simples. Este é um estudo de 100 pacien
   suppressPackageStartupMessages(library(psych))
   suppressPackageStartupMessages(library(broom))
   suppressPackageStartupMessages(library(nortest))
+  suppressPackageStartupMessages(library(coefplot))
   suppressMessages(library(mosaic))
   options(scipen = 5)
 ```
