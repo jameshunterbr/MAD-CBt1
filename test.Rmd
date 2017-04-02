@@ -1,0 +1,45 @@
+---
+title: "Respostas Inferência"
+author: "James Hunter"
+date: "4/2/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+suppressPackageStartupMessages(library(DescTools))
+options(scipen = 5)
+```
+
+
+1. Em nossa amostra de Cleveland, homens tem um nível de colesterol total diferente de que as mulheres?
+chol é a variável para colesterol total e genero é para os sexos, codificado como “M” = homens e “F” = mulheres. Siga todas os 4 passos para preparar e executar um teste de hipótese. Mostre alguma análise exploratória.
+
+### Passo 1: Formular Hipótese
+
+H0: d = 0
+H1: d <> 0
+
+### Passo 2: Colecionar Dados
+
+```{r}
+load("cleveland_heart.RData")
+str(cleveland_heart, give.attr = FALSE)
+Desc(chol ~ genero, data = cleveland_heart, plotit = TRUE)
+```
+
+### Passo 3: Executar teste
+
+```{r}
+cholTest <- t.test(chol ~ genero, data = cleveland_heart, alternative = "two.sided") 
+cholTest
+```
+
+### Passo 4 -- Interpretar Resultado
+
+Rejeitar $H_0$: diferença entre as médias não é 0; médias parecem ser diferentes.
+
+
