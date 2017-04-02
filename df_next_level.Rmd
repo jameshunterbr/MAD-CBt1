@@ -1,0 +1,109 @@
+---
+output: 
+  beamer_presentation:
+    fig_caption: no
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.height = 3, fig.width = 5)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+```{r loadmods, echo = FALSE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(knitr))
+  options(scipen = 5)
+```
+
+# Data Frames com Colunas de Listas
+
+## Fonte
+
+> Vem do blog post "Take Your Data Frames to the Next Level" de Kiefer Smith do blog "Real Data: Adventures in Data Science"; url: https://realdataweb.wordpress.com/2017/03/31/take-your-data-frames-to-the-next-level/
+
+## Operações com Colunas das Listas
+
+  - Podemos estender a estrutura de data.frame utilizando funções de dplyr
+    - para criar colunas que são listas 
+  - Uso de 2 novas funções
+    - `group_by()` -- agrupar a data frame por uma variável de classe `factor`
+    - `nest()` -- criar novas colunas por grupo com as outras como ítens na lista
+    
+## Dataset Simples e Tradicional - Íris
+
+  - Data frame que demonstra as caracteristicas da flor íris
+  - Um de mais tradicionais na historia de estatística 
+  - Elaborado pelo Ronald Fisher 
+    - Aquele de ANOVA e o Exact Test
+    
+## Criar Colunas de Listas Agrupadas por Especie
+
+```{r irisload, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+irisnin <- iris %>% 
+           group_by(Species) %>% 
+           nest()
+```
+
+## Resultado de Agrupamento
+
+```{r irisdad, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+irisnin
+head(irisnin$data[[1]])
+```
+
+## Usar Funções `purrr::map()` para Fazer Calculos sem Loops -- Média das Variáveis
+
+```{r irismed, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+mediasiris <- map(irisnin$data, colMeans)
+mediasiris
+```
+
+## Reverter os Dados para o Estado Original para Trabalhar com os Resultados
+
+```{r revert, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+head(unnest(irisnin))
+```
+
+
+## Gapminder Dataset 
+
+  - Caracteristicas dos paises
+  
+```{r careggap, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+library(gapminder)
+glimpse(gapminder)
+```
+
+## Agrupar os Dados de `gapminder` por `continent` 
+
+```{r grnst, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+contninho <- gapminder %>%
+             select(-year) %>%
+             group_by(continent, country) 
+
+glimpse(contninho)
+head(contninho)
+```
+
+## Para Evitar um Loop, Fazer um `nest()`
+
+```{r gapnest, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+contninho <- contninho %>% nest()
+glimpse(contninho)
+head(contninho)
+```
+
+## Calcular Médias para as Variáveis Numéricas
+
+```{r gapcalc, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+mediasgap <- map(contninho$data, colMeans)
+mediasgap[[1]]
+```
+
