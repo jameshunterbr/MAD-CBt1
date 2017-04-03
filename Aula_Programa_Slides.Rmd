@@ -78,7 +78,7 @@ if (!is.null(w) && !is.numeric(w))
 
 ## `for` Loops (*aka* Laços)
 
-  - Loops permitem que um program fazer tarifas repetitivamente
+  - Loops permitem que um program fazer tarefas repetitivamente
   - Existem vários tipos de loops
   - Pouco precisa usar outra forma que o `for` loop
   - Vamos aprender este tipo
@@ -182,7 +182,8 @@ quads[1:10] # Mostre primeiro 10 raizes quadrados
 ## Calculo de `log10cv`
 
 ```{r logcv, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
-cvdados <- read.csv("counts_demo.csv")
+cvdados <- read_csv("counts_demo.csv", col_names = FALSE, skip = 1)
+colnames(cvdados) <- c("copias_cv",	"contagem_cd4",	"contagem_cd8")           
 cvdados$log10cv <- rep(0, nrow(cvdados)) # inicializar nova variável
 for (i in 1:nrow(cvdados)) {
   cvdados$log10cv[i] <- log10(cvdados$copias_cv[i])

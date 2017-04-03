@@ -1,6 +1,5 @@
 ---
 title: "Matéria de Análise de Dados – Ciências Biomédicas"
-
 subtitle: "Aula 13 -- Programação em R - Conceitos Básicos"
 author: "James R. Hunter"
 date: "31 de março de 2017"
@@ -100,7 +99,8 @@ quads[1:10] # Mostre primeiro 10 raizes quadrados
 Agora, vamos trabalhar com uma amostra das cargas virais de pacientes de HIV e queremos criar uma variável no tibble com o logaritmo da carga viral. Já trabalhamos com esses dados do arquivo `counts_demo.csv`. Antes de começar o loop, precisamos carregar os dados. 
 
 ```{r}
-cvdados <- read.csv("counts_demo.csv")
+cvdados <- read_csv("counts_demo.csv", col_names = FALSE, skip = 1)
+colnames(cvdados) <- c("copias_cv",	"contagem_cd4",	"contagem_cd8")     
 cvdados$log10cv <- rep(0, nrow(cvdados)) # inicializar nova variável
 for (i in 1:nrow(cvdados)) {
   cvdados$log10cv[i] <- log10(cvdados$copias_cv[i])
