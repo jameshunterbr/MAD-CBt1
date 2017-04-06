@@ -1,0 +1,253 @@
+---
+title: "Matéria de Análise de Dados – Ciências Biomédicas"
+subtitle: "Aula 14: Analise de Variância -- ANOVA"
+author: "James Hunter"
+date: "7 de abril de 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Carregar os Pacotes Necessários
+
+```{r loadmods, echo = TRUE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(car))
+  suppressPackageStartupMessages(library(broom))
+  suppressPackageStartupMessages(library(coefplot))
+  suppressMessages(library(mosaic))
+  options(scipen = 5)
+  pvalaov <- function(model) { # função para extrair o valor p
+    x <- summary(model)
+    return(unlist(x[[1]][,5][1]))
+  }
+  R2 <- function(model) { # função para extrair o R quadrado
+    x <- summary(model)
+    SST <- sum(x[[1]][,2])
+    SSR <- x[[1]][,2][1]
+    return(SSR/SST)
+  }
+```
+
+Nesta aula, vamos fazer uma introdução a análise de variância (ANOVA). Aqui, nós vamos tratar os conceitos básicos dos modelos de ANOVA e como construir os modelos em R. Também, nós vamos homenagear o início de temporada de beisebol no meu país e usar um exemplo daquele esporte.
+
+## Proposito de ANOVA
+
+Nós usamos ANOVA para analisar comparações entre três ou mais grupos de uma variável. Para dois grupos, usamos um teste-t ou o equivalente não-paramétrico. Teoricamente, podemos fazer comparações entre a média de cada par de grupos quando temos mais que dois. Por exemplo, podemos fazer um teste de grupo 1 contra grupo 2, grupo 2 contra grupo 3 e grupo 1 contra grupo 3, no caso que temos três grupos. Esse faz um total de três comparações. Esse pode criar um grande dificuldade porque é provável que acharemos uma comparação das médias que é significativa por acaso, mesmo se não há uma diferença verdadeira na população.
+
+ANOVA evita este problema porque usa um teste de hipótese único para ver se as médias entre todos os grupos na amostra são iguais.
+
+## Teste de Hipótese de ANOVA
+
+A ANOVA teste a hipótese nula que o resultado média de todos os grupos é o mesmo contra a alternativa que pelo menos uma das médias é diferente. Uma maneira alternativa de falar da hipótese nula é que qualquer diferença entre as médias dos grupos 
+
+$$ H_0: \mu_1=\mu_2=...=\mu_k\:\:(onde\:\mu_i\:é\:a\:média\:das\:observações\:grupo\:i)  $$ 
+
+$$ H_1: ao\:menos\:1\:\mu\:é\:diferente$$
+
+A presença de grandes diferenças entre as médias dos grupos é evidência em favor da rejeição da hipótese nula. 
+
+Porque esta técnica é chamada análise de variância quando estamos testando diferenças entre médias e não os desvios padrões? A resposta é que o modelo avalia a variação entre as médias dos grupos relativo a variação entre observações individuais dentro dos grupos para determinar o grau de diferença entre médias.
+
+
+
+
+## Premissas de ANOVA
+
+Como com os outros testes paramétricos, ANOVA tem os seguintes premissas:
+
+  1. As observações devem ser independentes dentro e entre os grupos
+  2. Os dados dentro de cada grupo devem ser quase normais
+  3. A variância dos grupos deve ser quase igual
+
+## Dados para ANOVA -- Homenagem a Nova Temporada de Beisebol
+
+  - Início de nova temporada no último domingo
+  
+![Big Swing](/Users/jameshunter/Documents/UNIFESP/MAD-CB/baseball.jpg)
+
+![LA Dodger Stadium](/Users/jameshunter/Documents/UNIFESP/MAD-CB/dodgers.jpg)
+
+![Minha Equipe](/Users/jameshunter/Documents/UNIFESP/MAD-CB/dodgers logo.png)
+
+### Rebatadores -- Carregar Dados
+
+```{r}
+load("bat2015.RData")
+kable(head(bat, 8))
+```
+
+## O Que Nos Interesse?
+
+Nossa questão hoje é se tem diferenças entre a OBP para os jogadores nos posições de campo
+diferentes no American League em 2015. Estou usando dados da base de dados de beisebol de Lahman que são disponíveis no pacote do mesmo nome. Simplifiquei as posições para reduzir a complexidade do exercício. Todos os três tipos de 'outfielders' (right, left e center) são combinados em `OF` (outfielder). Também, como os jogadores que cuidam do "infield", combinei os cinco posições em `IF`. Receptor, "Catcher", a posição que recebe a bola do arremesador, deixei assim. E porque estamos trabalhando com a American League, existe nesta liga um jogador que só rebate (não faz defesa), um "Designated Hitter" (DH). 
+
+### OBP
+
+OBP é a abreviação para "on base percentage", ou seja, a porcentagem das vezes que o rebatedor aparece que ele consegue ganha um base. Muitas analistas acham que este é uma medida mais precisa sobre a habilidade de um rebatedor que a "batting average", que mede só a porcentagem das rebatidas válidas. 
+
+## Os Dados
+
+```{r}
+Desc(OBP ~ POS, data = bat, plotit = FALSE)
+```
+
+![Boxplot dos dados](/Users/jameshunter/Documents/UNIFESP/MAD-CB/obpdesc.png)
+
+Esses estatísticas mostram que a variação entre os grupos é muito parecido e podemos sentir confortáveis que a premissa #3 está sendo respeitada. O boxplot revela que há um outlier longe da caixa para os "infielders", mas com uma amostra dentro deste grupo de 132, o outlier não causa preocupação.
+
+## Teoria de ANOVA
+
+Sem entrar em muitos detalhes, ANOVA responde a uma pergunta única:
+
+> É a variação nas médias das amostras tão grande que parece improvável que surge de acaso sozinho. 
+
+(Diez, Barr & Cetinkaya-Rundel, **OpenIntro Statistics**, 3ª Ed, p. 250.)
+
+Em ANOVA, testamos todas as diferenças entre grupos simultaneamente. ANOVA funciona pela divisão da variação em componentes diferentes utilizando a soma dos quadrados que vemos primeiro em regressão. O algoritmo calcula primeiro um soma dos quadrados total que é quadrado das diferenças de todos os valores, não importa o grupo, da média de todos os valores (*grand mean*). O primeiro componente disso é a soma dos quadrados das diferenças entre a média dos grupos e a grand mean. É conhecido como a variação entre os grupos. ("SSG") O que sobra da variação é por causa dos residuais, ou seja, a soma dos quadrados das diferenças entre todos os valores dentro de um grupo e a média desse grupo. Este representa a variação dentro dos grupos. ("SSE") 
+
+Cada uma dessas somas de quadrados tem um grau de liberdade associada. Para SSG, é o número dos grupos ($k$) menos 1. O 1 representa a grand mean, que nós não podemos variar.
+
+$$ df_G=k-1$$
+O grau de liberdade associado com a SSE é o tamanho de amostra ($n$) menos o número dos grupos:
+
+$$ df_E=n-k$$
+
+### Estatística F
+
+A estatística que teste a hipótese mede a relação entre os dois componentes divididos pelos graus de liberdade. Esta divisão cria duas médias de soma dos quadrados ("MSG" e "MSE"). A estatística é conhecido pelo nome de distribuição que ela segue, "F". A formula para calcular F é o seguinte:
+
+$$ F_{df_1,df_2}=\frac{MSG}{MSE}$$
+
+O teste F precisa utilizar os graus de liberdade de grupos e de erro. Então, em nossa exemplo de beisebol, temos 4 grupos e um $n$ de `r nrow(bat)`. Assim, os graus de liberdade são:
+
+```{r echo = TRUE }
+grupos <- length(unique(bat$POS))
+df1 <- grupos - 1
+df2 <- nrow(bat) - grupos
+paste("grupos:", grupos, " df1:", df1, " df2:", df2)
+```
+e a distribuição F tem a forma:
+
+```{r}
+x <- seq(0, 6, .01)
+f <- df(x, df1, df2)
+plot(x, f, type = "l")
+```
+
+Como em regressão, se a variação entre os grupos (MSG) fica maior relativa a variação dentro dos grupos, maior vai ser o valor de F e a evidência seria mais forte para rejeitar a hipótese nula. 
+
+### $R^2$ para ANOVA
+
+Lembrando que o $R^2$, o coeficiente de determinação, mede a proporção da variação total que existe por causa do modelo (neste caso, nossos grupos) invés do acaso, aqui podemos usar a SSG e a SST para fazer este calculo. Porque a função `summary()` para modelos de aov não relata o valor de $R^2$, criei uma função `R2(modelo)` que faz isso para modelos de ANOVA "one-way", ou seja com uma variável independente. Para usar esta função, chame ela e dê o nome que você usou para gravar o modelo. 
+
+$$ R^2=\frac{SSG}{SST}$$
+
+## ANOVA em R
+
+Para fazer uma análise ANOVA em R, podemos usar ou a função `aov()` ou `lm()`. A última é a mesma função que usamos para fazer regressão linear. A diferença é como as duas funções apresentam os resultados. `aov()` foca no modelo em si, as somas de quadrados e o teste F. A `lm()` fornece mais informação sobre os parâmetros das variáveis independentes. A sintaxe é o mesmo que usamos para especificar um modelo de regressão.
+
+A função `summary()` mostra os resultados. Porque a ANOVA usa um modelo linear para fazer seus calculo, você pode acessar os parâmetros com a função `summary.lm()`.
+
+```{r}
+modela <- aov(OBP ~ POS, data = bat)
+summary(modela)
+```
+
+Este resultado mostra que existe uma diferença entre as posições em OBP. O valor p do teste F (`r round(pvalaov(modela), 4)`) é abaixo do valor padrão, 0.05. Podemos rejeitar a hipótese nula e dizer que as diferenças entre as médias são significativas. Antes de determinar quais das posições têm médias de OBP maiores ou menores que a média para todos os jogadores no estudo, precisamos ver se o modelo cumpriu as necessidades das premissas.
+
+## Resumo `lm` de um Modelo de ANOVA
+
+Apesar que é possível de mostrar um resumo no formato de um modelo linear (regressão) de um modelo ANOVA, muito da informação não é útil para analise. Este resumo está disponível com a função `summary.lm()'. A ilustração abaixo mostra os componentes da apresentação `lm` de um modelo[^1] e depois podemos ver nosso modelo neste formato. 
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/table lm.png)
+
+```{r}
+summary.lm(modela)
+```
+
+No caso do modelo de beisebol, o "baseline/control group" é a categoria de catcher. Os outros três linhas descrevem os resultados para as outras três posições. Mas as estatísticas com Estimate e Std. Error não têm muito utilidade para nós porque as categorias não são preditivas para OBP, a variável dependente. Vamos ver, abaixo, uma maneira de comparar as categorias que tem mais relação com testes de comparação entre médias que com regressão.
+
+## Validade do Modelo
+
+Fazemos isso com gráficos como fizemos com regressão linear. A função `plot()` produz os mesmos quatro gráficos para um modelo de ANOVA que modelos de regressão produziram. 
+
+```{r}
+par(mfrow=c(2,2))
+plot(modela)
+par(mfrow=c(1,1))
+```
+
+Os gráficos mostram que as premissas de independência e igualdade de variância estão compridas. Não mostram qualquer padrão ou tendência dos residuais. A normalidade de todos os grupos podemos presumir porque os grupos de interesse principal, outfielders and infielders, tem suficiente casos para ter confiança na teorema de limite central. Também, a plotagem "Normal Q-Q" mostra uma linha reta exceto nas caudas, que mostra que o conjunto dos dados inteiro tem uma distribuição normal. 
+
+### $R^2$ para Modelo de beisebol
+
+O $R^2$ de nosso modelo avisa que o poder explicatória de nossa variável independente é muito baixo ($R^2$ = `r round(R2(modela), 3)`). Este resultado é muito comum em modelos de ANOVA, especialmente com um número pequeno de variáveis que tem múltiplas categorias. O propósito de ANOVA é de julgar se diferenças existem. Mostramos aqui que eles existem entre posições no campo, sim. Mas se nós quisemos focar em quais são as causas dessas diferenças, seria melhor de construir um modelo de regressão com um mix de variáveis categóricas e numéricas que tem a ver com habilidade de rebater a bola. 
+
+Como um exemplo, um fator separando os melhores rebatedores e os outros é a habilidade de rebater um arremesso chamado "curve ball". O ex-Governador do Estado de Nova Iorque, falecido em 2015, Mario Cuomo jogou beisebol nas ligas de treinamento de beisebol profissional americano para times afiliados com o Pittsburgh Pirates. Ele nunca subiu além do segundo grau dos "minor leagues" porque, como ele disse, "Eu não podia rebater um curve ball." Invés, ele serviu como governador de um estado, um advogado bem respeitado e quase um candidato para a presidência dos EUA.
+
+## Comparações das Categorias -- Comparações Múltiplas
+
+Sabemos que alguma diferença entre os grupos existe. Como nós podemos descobrir quais posições são a fonte deste diferença? Ao início, queremos comparar as médias de todos os pares de grupos. Temos quatro grupos (C, DH, IN, OF). Podemos fazer 6 comparações (C vs. DH, C vs. IF, C vs. OF, DH vs. IF, DH vs. OF, IF vs. OF) utilizando um teste-t de duas amostras, mas temos de considerar uma modificação ao nível de $\alpha$ e uma estimativa combinada do desvio padrão incluindo todos os grupos. 
+
+Se nós não levamos em consideração o problema de desvio padrão combinado entre os grupos, podemos super-estimar o número de comparações que são significativas. Este quer dizer, em termos de erros, que estaremos fazendo mais erros de Tipo I, identificando um valor como significativo quando não é (um falso positivo). Quando temos comparações múltiplas, precisa aplicar uma correção que vai controlar o que é chamada a *taxa de erro familiar* ("family-wise error rate", FWER). 
+
+### Correção Bonferroni
+O mais tradicional correção para as comparações múltiplas é a correção Bonferroni.[^2] Invés de corrigir a probabilidade do valor-p, a Bonferroni muda o $\alpha$. O novo $\alpha$ é o resultado da divisão da $\alpha$ original por o número de comparações ("C"). Equivalentemente, a correção pode ser calculado em termos de valores-p como o produto do C vezes o valor-p da comparação.
+
+$$ \alpha_{Bf}=\frac{\alpha}{C} $$
+
+Para estimar a correção em R, precisa fazer um teste-t para todas as comparações, que podemos fazer com a função `pairwise.t.test()` e usar o argumento `p.adjust.method = "Bonferroni"`.
+
+```{r}
+grpmeans <- tapply(bat$OBP, bat$POS, mean)
+grpmeans
+pairwise.t.test(bat$OBP, bat$POS, p.adjust.method = "bonferroni")
+```
+
+Com a correção, podemos ver que catchers são diferentes que infielders e outfielders. Olhando nos OBP's para estas posições, podemos ver que as outras posições tipicamente consegue ganhar um base mais frequentemente que os catchers (valores p de 0.029 e 0.006, os dois abaixo de $\alpha$ = 0.05). Mas os outfielders e infielders não mostram alguma diferença com o outro o com os DH's (que normalmente também jogam no outfield ou infield).  
+
+### Alternativas a Bonferroni
+
+A correção Bonferroni está considerada muito conservadora e pode eliminar muitas comparações significativas incorretamente. Existem duas alternativas que merecem atenção aqui: *a taxa de descoberta falso* ("false discovery rate" FDR), também conhecido pelos nomes d os estatísticos que elaboraram ele, a correção Benjamini-Hochberg.[^3] A segunda correção é a *Tukey Diferenças Significativas Honestas* ("Tukey Honest Significant Differences" HSD).[^4] A correção de Tukey segue o padrão de um FWER, reduzindo a probabilidade de erros de Tipo I. Mas a FDR tenta de controlar a proporção das descobertas que são falso (rejeições da hipóteses nulas incorretas). Apesar as diferenças entre as correções são teoricamente um pouco abstratas, em operação, o HSD e a FDR são menos rígidos que a Bonferroni e vão aceitar mais comparações como significativas.
+
+### Benjamini-Hochberg FDR
+
+Em R, podemos fazer a correção de FDR para ANOVA na mesma maneira que fizemos a Bonferroni. Invés de `p.adjust.method = "Bonferroni"`, agora usamos `p.adjust.method = "BH"`.
+
+```{r}
+grpmeans <- tapply(bat$OBP, bat$POS, mean)
+grpmeans
+pairwise.t.test(bat$OBP, bat$POS, p.adjust.method = "BH")
+```
+
+Apesar que os resultados grossos ficam o mesmo, agora a diferença entre infielders e outfielders tem um valor-p muito menor que com a Bonferroni.
+
+### Tukey HSD
+
+A correção de Tukey tem uma função especial que pode trabalhar diretamente com o modelo de ANOVA, como nosso `modela`. A função fornece uma tabela das diferenças entre categorias, um intervalo de confiança e um valor-p ajustado. Além disso, tem um método para `plot` para fazer um gráfico da tabela.
+
+```{r}
+TukeyHSD(modela)
+plot(TukeyHSD(modela))
+```
+
+De novo, somente os catchers são abaixo dos infielders e outfielders na categoria de OBP. Você pode ver que os ajustes de valor-p são muito mais próximos aos da Bonferroni que aos de FDR. 
+
+Minha preferência é para uso da correção Benjamini-Hochberg. Acho a ideia de simplesmente dividir o $\alpha$ pelo número de comparações não suficiente sofisticada para justificar um castigo tão severo que a Bonferroni impõe. 
+
+[^1]:Webb, B.; Pajak, M., "ANOVA in R", course handout from School of Informatics, University of Edinburgh, n.d.
+
+[^2]:Dunn, Olive Jean. "Multiple Comparisons among Means." *Journal of the American Statistical Association* 56 (March 1961): 52–64. doi:10.1080/01621459.1961.10482090.
+
+[^3]:Benjamini, Yoav; Hochberg, Yosef "Controlling the false discovery rate: a practical and powerful approach to multiple testing." *J. Roy. Statist. Soc. Ser. B* 57 (1995): 289–300.
+
+[^4]:Tukey, John W. “Comparing Individual Means in the Analysis of Variance.” *Biometrics* 5 (June 1949): 99. doi:10.2307/3001913.
+
+## Outros Tipos de Modelos de ANOVA
+
+Aqui, só tratamos de um tipo de ANOVA, one-way, o modelo mais simples. Existem muitos outros modelos com múltiplas variáveis categóricas independentes. Esses modelos todos precisam de pesos para controlar as diferenças entre tamanhos de categorias das variáveis independentes e ficam para uma aula mais avançada. 
