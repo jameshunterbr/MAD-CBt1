@@ -1,0 +1,477 @@
+---
+output: 
+  beamer_presentation:
+    fig_caption: no
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/James/Documents/UNIFESP/MAD Course/course logo.png)
+
+
+# Machine Learning
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.height = 3, fig.width = 5)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+```{r loadmods, echo = FALSE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(caret))
+  suppressPackageStartupMessages(library(mice))
+  suppressPackageStartupMessages(library(corrr))
+  suppressMessages(library(mosaic))
+  options(scipen = 5)
+```
+
+## Fonte  
+
+  - Dr. Sharin Glander, Univ. de Münster, Alemanha
+    - Webinar excelente recente
+    - "Building meaningful machine learning models for disease prediction"
+    - https://github.com/ShirinG
+    
+  - Dados
+    - UCI Machine Learning Repository
+      - U. de Wisconsin dados sobre câncer de mama
+      - Arquivo "breast-cancer-wisconsin-data.txt"
+
+## Machine Learning em Modelagem das Doenças
+
+  - Tipicamente, projetos com "big data"
+  - Modelo pode fornecer informação rapidamente e corretamente
+    - Médicos podem usar a informação para desenhar tratamentos ou diagnósticos
+  - Aplicação para medicina personalizada de precisão
+  - Exemplo:
+    - Diagnostico de câncer de mama com ajuda de modelo informatizado
+
+##  Podemos Ter Confiança nos Modelos de Machine Learning?
+
+  - Algoritmos de ML modelam interações de alto grau enter as variáveis
+  - Interpretação dos resultados de ML pode ser difícil 
+  - A "caixa preta" dos algoritmos de ML escondem como eles fazem escolhas
+  - Assim, *precisamos modelos que significam algo* para os 
+    - Arquitetos
+    - Usadores
+  - "Meaningful Models"
+
+## O Que Faz um Modelo um "Meaningful Model"
+
+  - Poder generalizar baseado no modelo
+  - Responde à pergunta original
+  - ... com suficiente precisão para ser confiável
+  - Grau de precisão depende no problema
+  
+## Machine Learning
+  
+  - Inteligência artificial ("AI")
+  - Modelo orientado a dados
+  - Algoritmos **aprendem** por treinamento com dados observados
+  - E **prever casos desconhecidos**
+  - Computadores de hoje capazes de tratar essas bases de dados
+    - Mesmo laptops
+  
+## Machine Learning -- 2
+![](/Users/James/Documents/UNIFESP/MAD Course/ML_schema.png)
+
+## Machine Learning -- Supervisionada vs. Não-Supervisionada 
+![](/Users/James/Documents/UNIFESP/MAD Course/sup_vs_unsup.png)
+
+## Supervisionada -- Classificação vs. Regressão
+![](/Users/James/Documents/UNIFESP/MAD Course/sup_class_reg.png)
+
+## ## Supervisionada -- Classificação vs. Regressão
+![](/Users/James/Documents/UNIFESP/MAD Course/sup_class_reg_2.png)
+
+## Features -- Covariáveis
+
+  - Variáveis para treinar o modelo
+  - Selecionar as variáveis certas -- **crucial**
+  - Mais features não necessariamente bom
+    - Perigo de "overfitting"
+
+## Overfitting
+![](/Users/James/Documents/UNIFESP/MAD Course/overfit_diag.png)
+
+## Treinamento, Testes & Cross Validation 
+![](/Users/James/Documents/UNIFESP/MAD Course/cross_valid.png)
+
+## Dados de Treinamento e Testes
+
+  - Divide os dados aleatoriamente em dois grupos
+    - Treinamento
+    - Testes
+  - Proporções pode variar entre
+    - 50 - 50 -- se você tem uma base de dados muito grande
+    - 70 - 30 -- em outros casos
+
+## Treinamento e Testes 
+
+**NUNCA, JAMAIS, USE OS MESMOS DADOS PARA TESTES QUE VOCÊ USOU PARA TREINAMENTO**
+  
+## Cross-Validation (*k-fold*)
+
+  - Uma de uma serie de técnicas usadas para fortalecer a capacidade do modelo para prever resultados
+    - Bootstrap - reamostragem
+  - Com os dados de treinamento só
+  - Divide os dados em k grupos ("folds") aleatórios de tamanho igual
+  - Construir o seu modelo usando todos fora de um grupo 
+  - Testar o modelo nos dados no grupo que você reservou
+    - Calcular o erro entre as previsões com o modelo e os valores observados
+  - Repetir e fazer a média dos erros
+  - O modelo (entre os k que você construiu) com a média menor é o modelo melhor
+
+# Vamos Pôr as Mãos na Massa
+
+## Dados
+
+  - Vêm de Wisconsin dados sobre câncer de mama
+  - Características dos tumores de mama 
+  - Variável dependente: diagnose (`diag`)
+  
+## Covariáveis - Caracteristicas dos Tumores
+
+  - Vem de analise de imagens
+    - Aspiração com agulha fina
+  Características
+    - Sample ID (code number) 
+    - Clump thickness 
+    - Uniformity of cell size 
+    - Uniformity of cell shape 
+    - Marginal adhesion
+    - Single epithelial cell size 
+    - Number of bare nuclei 
+    - Bland chromatin 
+    - Number of normal nuclei 
+    - Mitosis
+
+## Carregar Dados
+```{r loaddata, echo = TRUE, mysize=TRUE, size='\\tiny'}
+bc_data <- read.table("breast-cancer-wisconsin-data.txt", 
+                      header = FALSE,
+                      sep = ",",
+                      na.strings = "?")
+colnames(bc_data) <- c("sample_code_number", 
+                       "clump_thickness", 
+                       "uniformity_of_cell_size", 
+                       "uniformity_of_cell_shape", 
+                       "marginal_adhesion", 
+                       "single_epithelial_cell_size", 
+                       "bare_nuclei", 
+                       "bland_chromatin", 
+                       "normal_nucleoli", 
+                       "mitosis", 
+                       "diag")
+
+bc_data$diag <- ifelse(bc_data$diag == "2", "benign",
+                          ifelse(bc_data$diag == "4", "malignant", NA))
+```
+
+## Dados
+
+```{r dads, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+glimpse(bc_data)
+```
+
+## Analise de NAs -- Decisão sobre o Que Fazer com Eles
+
+  - Quantas NAs estão nos dados?
+
+```{r nas, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+length(which(is.na(bc_data)))
+```
+  
+  - Quantas amostras perdemos se retiraram os NAs?
+  
+```{r nas2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+nrow(bc_data[is.na(bc_data), ])
+```
+
+## Imputar Valores de NAs
+
+  - Pacote e função `mice`
+    - Multivariate Imputation by Chained Equations 
+  - Cria dados imputados para dados incompletos multivariados
+    - Gibbs Sampling (técnica bayesiana)
+    - Gera valores plausíveis sinteticos dado as outras colunas no dataset
+  - Imputação introduza mais incerteza no modelo
+
+## 
+```{r namice, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+summary(bc_data$bare_nuclei)
+bc_data[,2:10] <- apply(bc_data[, 2:10], 2, function(x) 
+  X = as.numeric(as.character(x)))
+dataset_impute <- mice(bc_data[, 2:10],  print = FALSE)
+bc_data <- cbind(bc_data[, 11, drop = FALSE], mice::complete(dataset_impute, 1))
+summary(bc_data$bare_nuclei)
+```
+
+## Resumo das Diagnoses
+
+  - Converter `diag` para um `factor`
+  - Quantos casos de benign e malignant têm?
+  
+```{r explor, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+bc_data$diag <- as.factor(bc_data$diag)
+ summary(bc_data$diag)
+```
+
+## Gráfico das Diagnoses
+
+```{r explorgr, echo = TRUE, eval = TRUE, mysize=TRUE, size='\\scriptsize' }
+brgr1 <- ggplot(bc_data, aes(x = diag, fill = diag)) + geom_bar()
+brgr1
+```
+
+## Classes de `diag` Desequilibradas
+
+  - Normalmente precisa um ajuste para tratar dessa desequilibrade
+  - Não vamos fazer isso aqui
+
+##  Exploração de Algumas das Covariáveis
+
+```{r clump, echo = TRUE, mysize=TRUE, size='\\tiny'}
+Desc(bc_data$clump_thickness, plotit = FALSE)
+```
+
+##  `bland_chromatin`
+
+```{r bland, echo = TRUE, mysize=TRUE, size='\\tiny'}
+Desc(bc_data$bland_chromatin, plotit = FALSE)
+```
+
+##  `marginal_adhesion`
+
+```{r marg, echo = TRUE, mysize=TRUE, size='\\tiny'}
+Desc(bc_data$marginal_adhesion, plotit = FALSE)
+```
+
+## Gráfico das Covariáveis com a Diagnose
+```{r cogr1, echo = TRUE, eval = FALSE, mysize=TRUE, size='\\scriptsize'}
+gather(bc_data, x, y, clump_thickness:mitosis) %>%
+  ggplot(aes(x = y, color = diag, fill = diag)) +
+    geom_density(alpha = 0.3) +
+    facet_wrap( ~ x, scales = "free", ncol = 3)
+```
+
+##
+```{r cogr2, echo = FALSE, eval = TRUE}
+gather(bc_data, x, y, clump_thickness:mitosis) %>%
+  ggplot(aes(x = y, color = diag, fill = diag)) +
+    geom_density(alpha = 0.3) +
+    facet_wrap( ~ x, scales = "free", ncol = 3)
+```
+
+## Análise de Componentes Principais (PCA)
+
+  - PCA -- técnica para agrupar variáveis
+  - Neste caso
+    - Mostra que os níveis de diagnose formam espaços coerentes
+  - PCA - assunto para uma aula futura
+  
+## Gráfico de PCA
+
+```{r pca, echo = FALSE, eval = TRUE}
+suppressPackageStartupMessages(library(pcaGoPromoter))
+suppressPackageStartupMessages(library(ellipse))
+
+# perform pca and extract scores
+pcaOutput <- pca(t(bc_data[, -1]), printDropped = FALSE, scale = TRUE, center = TRUE)
+pcaOutput2 <- as.data.frame(pcaOutput$scores)
+  
+# define groups for plotting
+pcaOutput2$groups <- bc_data$diag
+  
+centroids <- aggregate(cbind(PC1, PC2) ~ groups, pcaOutput2, mean)
+
+conf.rgn  <- do.call(rbind, lapply(unique(pcaOutput2$groups), function(t)
+  data.frame(groups = as.character(t),
+             ellipse(cov(pcaOutput2[pcaOutput2$groups == t, 1:2]),
+                   centre = as.matrix(centroids[centroids$groups == t, 2:3]),
+                   level = 0.95),
+             stringsAsFactors = FALSE)))
+    
+ggplot(data = pcaOutput2, aes(x = PC1, y = PC2, group = groups, color = groups)) + 
+    geom_polygon(data = conf.rgn, aes(fill = groups), alpha = 0.2) +
+    geom_point(size = 2, alpha = 0.6) + 
+    scale_color_brewer(palette = "Set1") +
+    labs(color = "",
+         fill = "",
+         x = paste0("PC1: ", round(pcaOutput$pov[1], digits = 2) * 100, "% variance"),
+         y = paste0("PC2: ", round(pcaOutput$pov[2], digits = 2) * 100, "% variance")) 
+```
+
+## Gráfico de Correlação
+
+  - Existem fortes ou fracas associções entre as covariáveis?
+  - Uso do pacote `corrr`
+    - Novo pacote associado com o tidyverse
+
+## 
+
+```{r corrcov, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+corrdf <- correlate(bc_data[,2:10])
+cplot <- rplot(corrdf, legend = TRUE, colours = 
+                 c("darkred", "green", "darkblue"))
+cplot <- cplot + theme(axis.text.x = 
+                         element_text(angle = 30, hjust = 1, vjust = 1))
+
+```
+
+```{r corrpr, mysize=TRUE, size='\\scriptsize'}
+corrdf
+```
+
+##
+```{r, echo = FALSE}
+cplot
+```
+
+# Treinamento e Teste -- Dados Separados
+
+## Pacote `caret`
+
+  - Funções para apoiar machine learning
+  - Pode conduzir todo a análise dentro de `caret`
+  - No grupos dos pacotes iniciais
+  
+## Separar Treinamento e Testes
+
+  - Utilizar função `caret::createDataPartition()` para criar bases separadas
+    - 1 para treinamento do modelo
+    - 1 para testes
+  - Especificar (`p`) porcentagem de dados colocado na base de treinamento
+    - Entre 0.5 (50%) e 0.7 (70%)
+  - `createDataPartition()` estratifica os dados baseada nas proporções da variável $y$
+  
+    
+## Criar as Bases Treinamento e Testes
+
+```{r ind, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+set.seed(42)
+indice <- createDataPartition(bc_data$diag, p = 0.7, list = FALSE)
+train_data <- bc_data[indice, ] # use os índices para o treinamento
+test_data <- bc_data[-indice, ] # use os outros para testes
+```
+
+## as Bases Refletem os Mesmos Dados?
+
+```{r grtesttr, echo = FALSE}
+rbind(data.frame(group = "train", train_data),
+    data.frame(group = "test", test_data)) %>%
+  gather(x, y, clump_thickness:mitosis) %>%
+  ggplot(aes(x = y, color = group, fill = group)) +
+    geom_density(alpha = 0.3) +
+  facet_wrap( ~ x, scales = "free", ncol = 3)
+```
+
+## Exemplos dos Tipos de Modelos
+
+  - Regressão Linear
+    - Ex: GLM
+    - com `caret`
+  - Classificação com Arvores
+    - Árvores recursivas de particionamento e regressão (pacote `rpart`)
+    - Florestas Aleatórias ("Random Forests")
+  - Todos com `caret`
+  
+## Controle de Treinamento
+
+  - Antes de iniciar o passo de treinar o modelos, precisamos decidir qual tipo de validação queremos usar
+    - bootstrap, k-fold cross validation
+  - Especificar através da função `caret::trainControl()`
+  - Queremos usar *10-fold cross validation*
+  - Se pudermos repetir o processo de cross validation, faz a seleção do modelo ainda mais forte
+    - Repetiremos 10 vezes
+  
+## `trainControl()`
+
+```{r cont, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+set.seed(42)
+control <- trainControl(method = "repeatedcv",
+                       number = 10,
+                       repeats = 10,
+                       savePredictions = TRUE,
+                       verboseIter = FALSE)
+```
+
+## Variável Dependente: *benign* ou *malignant*
+
+>-  Qual tipo de análise mais relacionado?
+>-  Regressão logistica
+
+## Treinamento do Modelo -- Regressão Logistica
+
+```{r train, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+model_glm <- caret::train(diag ~ .,
+                          data = train_data,
+                          method = "glm",
+                          preProcess = c("scale", "center"),
+                          trControl = control)
+```
+
+## Objeto de Modelo
+
+![model object](/Users/James/Documents/UNIFESP/MAD Course/model object.png)
+
+  - R preserva todas as iterações do modelo
+  - Objeto grande (1MB)
+
+  
+## Modelo
+
+```{r mod, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+model_glm
+```
+
+## Resumo dos Resultados do Modelo
+
+```{r mod2, echo = TRUE, mysize=TRUE, size='\\tiny'}
+summary(model_glm)
+```
+
+## O Modelo Pode Predizer os Resultados de Treinamento e de Teste?
+
+  - Função `predict()`
+    - com modelo e valores para ser usados para previsão
+  - Aplicado a base de `train` como exemplo
+  - Mais interessante -- base de `test`
+    - Modelo nunca viu esses dados antes
+  - **Teste ácido**
+
+## Previsões
+
+```{r prev, echo = TRUE, mysize=TRUE, size='\\tiny'}
+predtr <- predict(model_glm, train_data)
+predtest <- predict(model_glm, test_data) 
+prop.table(table(predtest))
+prop.table(table(predtr))
+```
+
+## Quais Variáveis Têm Importância para o Modelo
+
+```{r coefgr, echo = TRUE, mysize=TRUE, size='\\tiny'}
+plot(caret::varImp(model_glm))
+```
+
+## Previsões com os Dados de Teste -- Matriz de Confusão
+
+```{r cfm1, echo = TRUE, mysize=TRUE, size='\\tiny'}
+confusionMatrix(predtest, test_data$diag)
+```
+
+## Previsões com os Dados de Treinamento -- Matriz de Confusão
+
+```{r cfm2, echo = TRUE, mysize=TRUE, size='\\tiny'}
+confusionMatrix(predtr, train_data$diag)
+```
+
+## 
+
+
