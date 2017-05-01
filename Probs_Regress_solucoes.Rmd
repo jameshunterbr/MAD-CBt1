@@ -1,0 +1,326 @@
+---
+title: "Problemas -- Regressão & Programação"
+subtitle: "Soluções"
+author: "James R. Hunter"
+date: "18 de abril de 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loadmods, echo = FALSE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(car))
+  suppressPackageStartupMessages(library(ISLR)) 
+  suppressPackageStartupMessages(library(broom))
+  suppressPackageStartupMessages(library(coefplot))
+  suppressMessages(library(mosaic))
+  load("probsRegress.RData")
+  options(scipen = 5)
+```
+
+Nestes exercícios, vamos experimentar com regressão e programação. Os exercícios terão várias partes. Não esqueça responder a todas! Tem no Github um arquivo `probsRegress.RData` com os dados que você precisa para completar os exercícios. Fazer o download dele e `load("probsRegress.RData")`.
+
+# 1. Expectativa de Vida em Europa
+
+Neste exercício, tirei dados do pacote `gapminder` sobre expectativa da vida (`lifeExp`) e PIB por capita (`gdpPercap`) para os anos 2002 e 2007 para os países de Europa. O código para reproduzir os dados para o problema segue. Você deve copiar e colar ele no seu trabalho. Faça uma regressão simples linear que mostra qual é o efeito que PIB tem sobre expectativa da vida. Países ricas têm expectativa de vida maior? Responde às partes a - f. Como sempre, não esqueça de fazer um pequeno estudo exploratório dos dados.
+
+### Dados do problema
+```{r}
+library(gapminder)
+vidaExp <- gapminder %>% 
+           filter(year > 2000 & continent == "Europe") %>% 
+           select(year, lifeExp, gdpPercap)
+```
+
+### Perguntas
+
+a.  A variável `lifeExp` tem uma distribuição normal segunda o teste Shapiro-Wilks?
+b.  Uma transformação logarítmica pode fazer ela normal? Por que?
+c.  Reconhecendo que a variável dependente não é puramente normal, você pode confiar em qual regra de estatística para usar regressão linear? Por que?
+d.  O que é a equação linear que determina a relação entre as variáveis no formato de $y=\beta_0+\beta_1x$
+e.  Qual proporção de variância no modelo esta equação descreve?
+f.  Mostre e examine os quatro gráficos que pode usar para entender melhor a regressão. Essa regressão é confiável? Por que?
+
+# 1. Solução
+
+## a.
+```{r}
+Desc(vidaExp$lifeExp)
+shapiro.test(vidaExp$lifeExp)
+```
+
+O teste de normalidade de Shapiro-Wilk tem um valor-p muito abaixo do nível tradicional de $\alpha$ = 0.05. Assim, provavelmente a distribuição **não** está normal.
+
+## b.
+```{r}
+vidaExp <- vidaExp %>% mutate(lifeExplog = log10(lifeExp))
+shapiro.test(vidaExp$lifeExplog)
+```
+
+Neste caso, a transformação **não** ajuda por causa dos 2 modos na distribuição.
+
+## c. Qual regra de estatística:  
+
+Teorema de Limite Central: Com um $n$ alto (> 35), podemos assumir que a distribuição aproxima à normal
+
+## d. Equação de Regressão
+
+```{r}
+vidafit <- lm(lifeExp ~ gdpPercap, data = vidaExp)
+summary(vidafit)
+```
+
+Equação: $y = 72.031 + 0.002x$
+
+## e.
+
+$R^2=0.7318$ da variância
+
+## f. 
+```{r}
+par(mfrow=c(2,2))
+plot(vidafit)
+par(mfrow=c(1,1))
+```
+
+A curva no gráfico dos residuais (#1) indica que a relação entre gdpPercap e lifeExp é provávelmente de segundo grau. Esta conclusão seria apoiada pelas 2 pequenas curvas no meio da linha Q-Q e a curva no gráfico de Scale-Location. Assim, a solução em si merece pouco confiança no formato atual.
+
+# 2. Loops, if ... then
+
+No conjunto de dados `vidaExp`, você quer criar uma nova variável categórica que expressa `gdpPercap` em duas categorias: "alto", "baixo". Você vai dividir a variável ao ponto da média da `gdpPercap`.
+
+a.  Escreva e execute um bloco de código usando `ifelse()` que cria a nova variável `pibcat`.
+b.  Use uma combinação de um loop e uma construção condicional ("if ... then") para conseguir esta tarefa.
+
+# 2. Solução
+
+## a.
+
+```{r}
+vidaExp$gdpcat <- ifelse(vidaExp$gdpPercap > mean(vidaExp$gdpPercap), "alto", "baixo")
+```
+
+## b.
+
+```{r}
+vidaExp$gdpcat2 <- 0
+mediagdp <- mean(vidaExp$gdpPercap) # só quero calcular 1 vez, não cada vez que o loop roda
+for (i in seq_along(vidaExp)) { # pode ser também (i in 1:nrow(vidaExp))
+  if (vidaExp$gdpPercap[i] > mediagdp) {
+    vidaExp$gdpcat2[i] <- "alto"
+  }
+  else {
+    vidaExp$gdpcat2[i] <- "baixo"
+  }
+}  
+```
+
+NB: Outras soluções são possíveis. Este não é a única possibilidade.
+
+# 3. Kilometragem dos Carros
+
+Uma sondagem sobre carros em 1970 listou 392 modelos de carros e a economia de combustível eles tiveram. Teve vários indicadores de que seria a quilometragem de combustível, como horsepower (cavalos). Para este problema, nós vamos trabalhar com `auto1`.
+
+## Perguntas e Tarefas
+
+a.  Faça uma análise exploratória dos duas variáveis (`mpg` e `horsepower`)
+b.  Faça um scatterplot de mpg (eixo-y) e horsepower (eixo-x). Mostra alguma tendência? 
+c.  Tendência é linear ou não-linear? Se for não-linear, qual poder melhor expressa esta relação
+d.  Faça uma regressão linear simples entre mpg e horsepower. Escreva a equação da regressão e o $R^2$  
+e.  Mostre os 4 gráficos para o modelo simples. Mostra uma tendência nos resíduos?
+f.  Faça uma regressão linear polinomial de segundo grau entre mpg e horsepower. Escreva a equação da regressão e o $R^2$
+g.  Qual modelo teve a melhor $R^2$?
+h.  Mostre os 4 gráficos para modelo polinomial.
+
+# 3. Solução
+
+## a. Análise Exploratória
+
+```{r}
+Desc(auto1$mpg)
+Desc(auto1$horsepower)
+```
+
+## b. Scatterplot
+
+Tem vários que pode usar. Vou usar a função do pacote `car`
+
+```{r}
+scatterplot(mpg ~ horsepower, data = auto1)
+```
+
+## c. Tendências
+
+A tendência não é linear. Parece de pertencer a uma equação de segundo grau.
+
+## d. Regressão Simples
+
+```{r}
+mpgfit1 <- lm(mpg ~ horsepower, data = auto1)
+summary(mpgfit1)
+```
+
+Equação: $y= 39.936 - 0.158x$  
+$R^2=0.606$
+
+## e. 4 Gráficos
+
+```{r}
+par(mfrow=c(2,2))
+plot(mpgfit1)
+par(mfrow=c(1,1))
+```
+
+Os resíduos mostram uma tendência clara de 2 grau
+
+# f. Regressão Polinomial
+
+```{r}
+mpgfitpoli <- lm(mpg ~ horsepower + I(horsepower^2), data = auto1)
+summary(mpgfitpoli)
+```
+
+Equação: $y= 56.900 - 0.466x + 0.001x^2$  
+$R^2=0.688$
+
+## g. Melhor Modelo
+
+Modelo polinomial
+
+## h. 4 Gráficos
+
+```{r}
+par(mfrow=c(2,2))
+plot(mpgfitpoli)
+par(mfrow=c(1,1))
+```
+
+
+# 4. auto2 -- Regressão Múltipla
+
+Esta vez, nós vamos usar outras variáveis relacionados aos motores dos carros para ver se elas têm influência sobre economia de combustível. O conjunto `auto2` tem esses dados.
+
+a.  Faça uma análise exploratória sobre as variáveis novas (`displacement`, `weight`, `acceleration`)
+b.  Faça uma regressão múltipla usando todas as variáveis independentes.
+c.  Mostre o resultado (`summary()`)
+d.  Qual porcentagem da variância dos dados em total este modelo descreve?
+e.  Quais variáveis parecem não ter uma relação significante com a `mpg`? Porque, você acha?
+
+# 4.  Solução
+
+## a. Análise Exploratória
+
+```{r}
+Desc(auto2$displacement)
+Desc(auto2$weight)
+Desc(auto2$acceleration)
+```
+
+
+## b. Regressão Multiplá
+
+```{r}
+auto2fit <- lm(mpg ~ ., data = auto2)
+```
+
+## c. Resumo 
+
+```{r}
+summary(auto2fit)
+```
+
+## d. % de Variância
+
+$R^2 = .707$
+
+## e. Variáveis não-significativas
+
+`displacement` e `acceleration` não parecem significativas, possivelmente porque `horsepower` também descreve a mesma caracteristica dos carros.
+
+
+
+# 5. Regressão Lógistica
+
+Vamos agora olhar num estudo sobre câncer de próstata. A questão aqui é de entender melhor se o câncer espalhou para os linfonodos em volta da próstata. O estudo tenta avaliar se cinco indicadores podem substituir uma cirurgia exploratória. As cinco variáveis no conjunto de `proscan` são
+
+  1. `raioX`: leitura de um raio X; valores binários 1 = positivo, 0 = negativo
+  2. `grau`: leitura patológica como resultado de uma biopsia de agulha fina; valores binários 1 = positivo, 0 = negativo
+  3. `estagio`: tamanho do tumor obtido pela palpação com os dedos; valores binários 1 = positivo, 0 = negativo
+  4. `idade`: idade do paciente em anos
+  5. `acido`: nível x 100 de fosfatase ácida sérica
+  
+A variável `linfonodos` tem o resultado determinado pela cirurgia se o câncer tinha espalhado ou não
+  
+## Tarefas
+
+  a. Faça uma análise exploratória dos dados, inclusive com `cplot()` para entender o problema melhor
+  b. Construa um modelo logístico de linfonodos contra as outras variáveis
+  c. Todas as variáveis são significativas? Quais são e quais não são
+  d. Construa um segundo modelo logístico usando `raioX`, `estagio` e `acido`
+  e. Este modelo descreve mais da deviança nos dados?
+  f. Construa um terceiro modelo com só as variáveis significativas.
+  g. Faça uma comparação entre os três modelos. Qual é o melhor? Com este modelo, calcule os odds, um intervalo de confiança para os odds e a probabilidade de ocorrência da presença de tecido maligno nos linfonodos.
+
+# 5. Solução
+
+## a. Análise Exploratória
+
+```{r}
+Desc(proscan)
+cdplot(proscan$idade, as.factor(proscan$linfonodos))
+cdplot(proscan$acido, as.factor(proscan$linfonodos))
+```
+
+## b. Modelo Logístico 1
+
+```{r}
+linffit1 <- glm(linfonodos ~ ., data = proscan, family = binomial(link = "logit"))
+summary(linffit1)
+```
+
+## c. Variáveis Significativos
+
+Não todas são significativas. Significativos: `raioX` e `estagio`. Outras: não
+
+## d. Segundo Modelo
+
+```{r}
+linffit2 <- glm(linfonodos ~ raioX + estagio + acido, data = proscan, 
+                family = binomial(link = "logit"))
+summary(linffit2)
+```
+
+## e. Modelo descreve mais de deviância
+
+Apesar da melhora no AIC, este modelo tem um leve aumento no desvio residual (de 48.126 até 50.660). Então formalmente, piorou o desvio.
+
+## f. Modelo 3 - Variáveis Significativos
+
+```{r}
+linffit3 <- glm(linfonodos ~ raioX + estagio, data = proscan, 
+                family = binomial(link = "logit"))
+summary(linffit3)
+```
+
+## g. Comparação
+
+O melhor modelo parece de ser o 1º porque tem o desvio residual mínimo.
+
+```{r}
+invlogit <- function(x) { ## função para calcular invlogit
+   1/(1 + exp(-x))
+}
+coefplot(linffit1)
+paste("Relação de Odds:")
+exp(coef(linffit1)) # Calculate the odds
+paste("Intervalo de Confiança dos Odds:")
+exp(confint(linffit1))
+paste("Probabilidade de Ocorrência:")
+invlogit(linffit3$coefficients)
+```
+
