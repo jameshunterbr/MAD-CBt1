@@ -1,0 +1,481 @@
+---
+output: 
+  beamer_presentation:
+    fig_caption: no
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+
+# Análise de Componentes Principais -- Principal Components Analysis (PCA)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.height = 3, fig.width = 5)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+```{r loadmods, echo = FALSE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(psych))
+  suppressPackageStartupMessages(library(RColorBrewer))
+  suppressPackageStartupMessages(library(rafalib))
+  suppressPackageStartupMessages(library(corrplot))
+  suppressPackageStartupMessages(library(broom))
+  options(scipen = 5)
+```
+
+## Redução em Número de Variáveis
+
+  - Para conjuntos de dados grandes com muitas variáveis
+  - Necessidade/desejo reduzir dimensões para um número menor coerente
+    - Facilidade de manipulação do conjunto
+    - Coerência de interpretação
+  - Adjunto útil para técnicas de análise genômicas
+    - NGS, RNASeq, DNASeq
+    - Número enorme de genes, mRNAs, etc.
+  - Poder de PCA para impôr um ordem aparante num grande corpo de variáveis
+
+## Historia de PCA
+
+  - Inventado por Karl Pearson em 1901
+  - Resumo de padrões de correlações entre variáveis observados
+    - Com objetivo de reduzir o número das variáveis
+  - Componentes são combinações lineares das variáveis
+  - Semelhante com Análise de Fatores
+    - *Diferença*: 
+    - Análise de Fatores: Quais processos subjacentes teóricos podiam ter criados essas correlações?
+    - PCA: Simples aglomeração das variáveis correlacionadas
+  - PCA -- uma transformação ortogonal de dados correlacionados
+    - **Transformação ortogonal** -- uma transformação que leva as variáveis a não ter correlação
+  
+## O Que Faz PCA?
+
+  - Produz uma matriz de carregamentos (pesos) que são usadas para determinar pontuações (*scores*) para todos os casos combinando as variáveis que compõem o componente
+  
+## Quando Usamos PCA?
+
+  - Quando queremos ter menos variáveis que colecionou originalmente para fazer análises subsequentes
+
+## Quantos componentes precisamos?
+
+  - Depende do ... 
+    1.  número de variáveis
+    2.  grau de correlação entre elas
+    
+  - Nós instruirmos o software sobre o número de componentes
+    - Baseado num estudo preliminar e o "screeplot"
+  - Com dados altamente correlacionados, precisa menos componentes para enquadrar a variância no modelo
+  - Com dados menos correlacionados, precisa mais
+  - Procedimento de testar para um número "ideal" dos componentes
+
+## Componentes 
+
+  - O algoritmo calcula o número desejado de componentes
+  - Começa com o componente que maximiza a variância explicada (PC1)
+    - Por causa que minimiza a soma dos quadrados das distâncias entre os pontos e a linha que o componente descreve
+  - 2º componente é outra combinação linear que maximiza variância
+    - **MAS**, a direção dele é perpendicular ao PC1, que quer dizer ...
+    - é ortogonal a PC1 (rotação dos eixos do componente)
+    - elimina a correlação incluído em PC1
+ 
+## Um Pouco Dentro de Caixa Preta de PCA
+
+  - PCA funciona como aplicação da técnica de álgebra linear - SVD
+  - Decomposição em Valores Singulares 
+    - *Singular Value Decomposition*
+    - Fatoração de uma matriz de números reais
+  - Uma matriz $X$ pode ser fatorada em 3 submatrizes:
+  
+$$ X=UDV^T $$
+
+  - Se os dados foram normalizados, a matriz $T$ têm os componentes principais
+  - $T$ é uma matriz ortogonal
+
+## Matriz Ortogonal -- 2 Caracteristicas
+
+  1.  Matriz sempre pode ser invertida [$X^{-1}=X^T$]
+  2.  Produto da matriz e sua transposta é a matriz de identidade [$XX^T=I$]
+
+## Matriz de Identidade (I)
+
+  - Matriz quadrada com 1's nos diagonais e 0's nas outras posições
+  - Matriz de Identidade 3 x 3:
+  
+$$ 
+I=\left[ \begin{array}{ccc} 1&0&0\\0&1&0\\0&0&1\end{array} \right]
+$$
+
+## Requisitos de Dados
+
+  - Dados devem ser numéricos
+    - Variáveis categóricas não podem ser analisadas
+  - Normalidade
+    - Não precisam ser normais
+    - Se foram normais, resultado vai explicar mais da variância
+  - Outliers
+    - Outliers podem exercer uma influência exagerada sobre o resultado
+  - Linearidade
+    - Componentes são combinações lineares das variáveis
+    - Baseado em correlação que é linear em si
+    
+## Tamanho de Amostras
+
+  - Antigamente, a "regra de ouro" foi muitos casos por cada variável no PCA
+    - Pelo menos 5 por variável
+  - Hoje estamos mais agnóstico sobre a quantidade; é a qualidade que conta
+  - Mas, mais é melhor
+  - Amostras pequenas estão menos estáveis
+  
+##  2 Algoritmos entre Muitos
+
+  - `principal` do pacote `psych`
+  - `prcomp` do base R
+  - Outros programas
+    - `corrplot` -- visualização de matriz de correlação
+    - `screeplot` -- visualização do impacto de cada componente (2 versões)
+    - `biplot` de pacote `psych` -- visualização de carregamentos dos 1º dois componentes
+      
+## Mergulhar Num Exemplo
+
+  - Dados de Câncer de Mama de Wisconsin de novo
+  - Características dos tumores de mama 
+  - Variável dependente: diagnose (`diag`)
+    - Que não nos interesse aqui
+    - Só queremos estudar os covariáveis
+
+## Carregar Dados e Eliminar NA's
+
+  - 699 casos de 9 (co)variáveis
+  - Em `bare_nuclei`, valor imputado no lugar de "?" será a média da variável
+
+```{r loaddata, echo = FALSE, include = FALSE}
+bc <- read_delim("breast-cancer-wisconsin-data.txt", delim = ",", col_names = FALSE)
+colnames(bc) <- c("sample_code_number", 
+                       "clump", 
+                       "uniform_size", 
+                       "uniform_shape", 
+                       "marg_adhes", 
+                       "unit_cell_size", 
+                       "bare_nuclei", 
+                       "bland_chroma", 
+                       "normal_nuc", 
+                       "mitosis", 
+                       "diag")
+bcmod <- bc %>% select(-c(1,11)) %>% mutate_all(funs(as.numeric(.)))
+## Impute mean value for missing values of bare_nuclei
+bnmean <- mean(bcmod$bare_nuclei, na.rm = TRUE)
+bcmod$bare_nuclei[which(is.na(bcmod[,"bare_nuclei"]))] <- bnmean
+```
+
+## Explorar a Matriz de Correlações
+
+  - Construa uma matriz (formato de tibble) de correlações entre as covariáveis
+  - Faça um gráfico que mostra elas
+  
+```{r cormat, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+bccorr <- as_tibble(cor(bcmod, method = "pearson"))
+
+meancors <- bccorr %>% map_dbl(~ mean(., na.rm = TRUE)) 
+meancorsp <- rownames_to_column(as.data.frame(meancors)) %>% 
+             arrange(desc(abs(meancors)))
+```
+
+## Matriz de Correlação
+
+```{r corrmat, echo = FALSE, mysize=TRUE, size='\\scriptsize'}
+bccorr
+```
+
+## Média de Correlações 
+
+```{r}
+meancorsp
+```
+
+## Gráfico de Correlações
+
+```{r corrgr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+corrplot::corrplot(as.matrix(bccorr), method = "ellipse", type = "lower", 
+         tl.cex = .7, tl.col = "black")
+```
+
+## Gráfico Alternativo -- `psych::pairs.panels`
+
+```{r grpairs, echo = FALSE, eval = FALSE,  mysize=TRUE, size='\\scriptsize', fig.height = 4}
+pairs.panels(bcmod, show.points = FALSE) ## pontos demais
+```
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/pairsbc.png)
+
+## Construir PCA Inicial -- Para Testar # de Componentes
+
+```{r pcainit, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+set.seed(42)
+bcpca1 <- principal(bcmod, nfactors = 8, rotate = "none", missing = TRUE)
+```
+
+  - `nfactors = 8` -- máximo possível; = 1 a menos do número de variáveis
+
+## *Screeplot* do Primeiro Modelo -- do Pacote `psych`
+
+```{r pca1sc, echo = TRUE, eval = FALSE, mysize=TRUE, size='\\scriptsize'}
+scree(bccorr, main = "Scree Plot de principal")
+```
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/screepryn.png)
+
+## *Screeplot* do Primeiro Modelo -- do base R
+```{r pca1sc2, echo = TRUE, mysize=TRUE, size='\\scriptsize', fig.height = 3.5}
+screeplot(prcomp(bcmod, rank = 8, center = TRUE, 
+                 scale = TRUE), type = "l", main = "Scree Plot de base")
+abline(v = 2, col = "cornflowerblue")
+```
+
+## Como Julgar o Número de Componentes do Modelo Inicial no "Scree plot"
+
+  - Primeiro número de componente com "Eigen value" abaixo de 1
+    - `scree` do pacote `psych`
+  - Primeiro número de componente depois de "cotovelo" no gráfico
+    - `screeplot` do base R
+    
+  - Conclusão
+    - Pode trabalhar com 2 componentes
+
+## 1º Modelo em Números
+
+```{r pca1carr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+bcpca1$loadings
+```
+    
+## Construir Modelo com 2 Componentes
+
+```{r pca2, echo = TRUE}
+set.seed(42)
+bcpca2 <- principal(bcmod, nfactors = 2, rotate = "none", 
+                    missing = TRUE)
+```
+
+## Resumo do Modelo
+
+```{r pca2resumo, echo = TRUE, mysize=TRUE, size='\\tiny'}
+summary(bcpca2)
+```
+
+## Carregamentos das Variáveis sobre os Componentes -- `bcpca2`
+
+```{r pca2carr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+bcpca2$loadings
+```
+
+## Modelo Suficiente Bom?
+
+  - Descreve 74.1% da variância
+    - OK, mas não muito bom
+  - Se aumentamos até 3 componentes
+    Pode aumentar proporção da variância descrita até 80%
+  - **Porém** vou continuar com 2 componentes para facilitar a apresentação
+
+## Construir Modelo Final - 2 Componentes com Rotação
+
+  -  Agora, testar o modelo sem e com a rotação `varimax`
+    - `varimax`: rotação que maximiza a diferença entre os componentes
+    - Facilita interpretação dos componentes
+  - Conseguimos reduzir o número de variáveis de 9 até 2 (ou 3)
+  
+## Modelo 2 -- com Rotatção
+```{r pca2r, echo = TRUE}
+set.seed(42)
+bcpca2r <- principal(bcmod, nfactors = 2, rotate = "varimax", 
+                    missing = TRUE)
+```
+
+## Modelo 3 -- sem Rotatção -- Carregamentos
+
+```{r pca2rcarr, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+bcpca2r$loadings
+```
+
+## Leitura do Biplot
+
+  - Eixos a esquerda, fundo (*ticks* em preto)
+    - Pontuações no cada componente para os casos
+  - Eixos a direta, acima (*ticks* em vermelho)
+    - Carregamentos das variáveis
+    
+## Biplot dos Componentes
+
+```{r bcbiplot, echo = TRUE, eval = FALSE, mysize=TRUE, size='\\scriptsize'}
+biplot(bcpca2r, main = "Biplot -- Câncer de Mama -- v.2r", pch = 19)
+```
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/bcbiplot.png)
+
+## Como Usamos os Resultados da PCA?
+
+  - Sistema calcula pontuação para cada caso (paciente) para cada componente
+
+$$ P_{caso, pc}=L_{v1,pc}*V_{v1,pc}+L_{v2,pc}*V_{v2,pc}+...+L_{vn,pc}*V_{vn,pc}$$
+
+  - onde $P$ = pontuação, $pc$ = componente, $L$ = Carregamento, $v1...vn$ = variáveis, $V$ = valor da variável
+  - Cada caso terá uma pontuação para cada componente
+    - Como o componente funcionou como uma variável
+  - Carregado no elemento `$scores` do modelo (neste caso, `bcpca2r`)
+  - **Precisa lembrar que os valores da PCA são normalizados**
+
+## Pode Pôr as Pontuações na Estrutura de Dados para Usar nas Análises Subsequentes
+
+  - Mais, restorar os identificadores ao tibble
+  
+```{r bcols, echo = TRUE, mysize=TRUE, size='\\tiny'}
+bcid <- as_tibble(bc$sample_code_number) 
+colnames(bcid) <- 'id'
+compscores <- as_tibble(bcpca2r$scores)
+bcpcdados <- bind_cols(bcid, bcmod, compscores)
+glimpse(bcpcdados)
+```
+
+# Exemplo 2
+
+## Verdadeiro Projeto de Mestrado
+
+  - Medidas de habilidades cognitivas numa amostra de pacientes
+  - 74 testes psicológicos administrados aos pacientes
+  - Para fazer parte de uma análise ANOVA com outras variáveis não-neurocientíficas
+  - Com PCA, reduzimos os 74 testes em 6 componentes.
+  
+## Carregar os Dados
+
+  - Dados já reduzidos aos numéricas que mostram valores "raw" dos testes (33 vars + id)
+
+```{r cogvars, echo = TRUE, mysize=TRUE, size='\\tiny'}
+load("excog.RData")
+glimpse(cogtest)
+```
+
+## Examinar Correlações entre as Variáveis
+
+```{r cogcor, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+## use non-parametric correlation
+corcogtest <- as_tibble(cor(cogtest[,-1], method = "spearman")) 
+meancors <- corcogtest %>% map_dbl(~ mean(., na.rm = TRUE))
+meancorsp <- as_tibble(rownames_to_column(as.data.frame(meancors))) %>% 
+             arrange(desc(abs(meancors)))
+```
+
+## Tabela das Médias das Correlações entre as Variáveis
+
+```{r meancorrs, echo = TRUE, mysize=TRUE, size='\\tiny'}
+kable(meancorsp)
+```
+
+## 
+
+```{r grcorr, echo = TRUE, mysize=TRUE, size='\\scriptsize', fig.width = 5.5}
+corrplot(cor(cogtest[,-1], method = "spearman"), 
+         method = "square", type = "lower", 
+         tl.cex = .5, tl.col = "black")
+```
+
+## Resultados de Correlação
+
+  - Fora de alguns grupos pequenos de variáveis, elas não têm correlações muito altas
+  - Com correlações mais baixos, pode esperar a necessidade de mais componentes
+  - NB o uso de quadrados invés de elipses -- espaços muito menores
+  - Usar algoritmo `prcomp` de base R para fazer os calculos
+    - Precisamos especificar a normalização dos dados
+    - `center = TRUE`, `scale = TRUE`
+  
+## Construir um Modelo Inicial para Testar o Número de PCs
+
+```{r mod1, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+pcacalc <- cogtest[,2:ncol(cogtest)] ## criar dados sem o id (factor, não número)
+set.seed(42)
+pcafit1 <- prcomp(pcacalc, rank = 10, scale = TRUE, center = TRUE)
+```
+
+## Resumo do Modelo
+
+```{r mod1summ, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+summary(pcafit1)
+```
+
+## Screeplot
+
+```{r fit1scree, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+screeplot(pcafit1, type = "l", ylim = c(1,6), main = "Screeplot - pcafit1")
+abline(v = 4, col = "cornflowerblue")
+abline(v = 6, col = "cornflowerblue")
+```
+ 
+## Quantos Componentes?
+
+  - Cotovelos ocorrem aos **4** e aos **6** componentes (linhas azuis)
+  - Pode usar um ou outro
+  - Porém, por causa de baixo número de casos (21), prefiro usar 6 componentes
+  - 6 toma em conta 82% da variância invés de 72%
+  
+## Construir Modelo Final
+
+```{r cogfit2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+set.seed(42)
+pcafit2 <- prcomp(pcacalc, rank = 6, scale = TRUE, 
+                  center = TRUE, retx = TRUE)
+pcaimportance <- tidy(pcafit2, matrix = "d") %>% 
+                 slice(1:6)
+kable(pcaimportance)
+```
+
+## Criar Pontuação e Carregamentos 
+
+```{r fit2pl, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+cogpca <- as.tibble(pcafit2$x) %>% 
+          add_column(codigo = cogtest$codigo, .before = "PC1")
+cogloads <- as.tibble(pcafit2$rotation) %>% 
+            add_column(variavel = colnames(cogtest[,-1]), .before = "PC1")
+```
+
+## PC Pontuação para os Pacientes
+
+```{r fit2pont, echo = TRUE, mysize=TRUE, size='\\tiny'}
+kable(cogpca)
+```
+
+## PC Carregamento para 1º 10 Variáveis
+```{r fit2load, echo = TRUE, mysize=TRUE, size='\\tiny'}
+kable(cogloads[1:10,])
+```
+
+## Biplot de PC1 e PC2
+
+```{r biplot, echo = FALSE, fig.height = 4.5, fig.width = 6}
+biplot(pcafit2, cex = 0.5)
+```
+
+## Trabalho do Pesquisador Agora É Dar Nomes a Esses Componentes
+
+  - Examinar quais têm o mais positivos e negativos carregamentos
+  - PC tem relação conceitual com os positivos e é negativo para os outras.
+  
+## Exemplo -- PC1 -- Carregamentos Altos
+
+
+```{r hiscore, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+cogloads %>% group_by(variavel) %>% tally(PC1) %>% top_n(5)
+```
+
+## Exemplo -- PC1 -- Carregamentos Mais Negativos
+
+```{r lowscore,echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+cogloads %>% group_by(variavel) %>%  tally(PC1) %>% top_n(-5)
+```
+
+## Última Aula
+
+  - Naive Bayes
+  - Dia para submissão dos relatórios
