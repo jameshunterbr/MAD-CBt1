@@ -477,5 +477,5 @@ cogloads %>% group_by(variavel) %>%  tally(PC1) %>% top_n(-5)
 
 ## Última Aula
 
-  - Naive Bayes
+  - Empirical Bayes
   - Dia para submissão dos relatórios
