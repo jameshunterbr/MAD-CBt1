@@ -1,0 +1,564 @@
+---
+output: 
+  beamer_presentation:
+    fig_caption: no
+theme: "Boadilla"
+colortheme: "whale"
+---
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/course logo.png)
+
+
+# Empirical Bayes
+
+```{r setupRM, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.height = 3, fig.width = 5)
+knitr::knit_hooks$set(mysize = function(before, options, envir) {
+  if (before) 
+    return(options$size)
+})
+```
+
+```{r loadmods, echo = FALSE}
+  suppressMessages(library(tidyverse))
+  suppressPackageStartupMessages(library(DescTools))
+  suppressPackageStartupMessages(library(knitr))
+  suppressPackageStartupMessages(library(psych))
+  suppressPackageStartupMessages(library(RColorBrewer))
+  suppressPackageStartupMessages(library(rafalib))
+  suppressPackageStartupMessages(library(Lahman))
+  suppressPackageStartupMessages(library(ebbr))
+  suppressPackageStartupMessages(library(stats4))
+  suppressPackageStartupMessages(library(broom))
+  options(tibble.print_min = 6, scipen = 5)
+```
+
+## Baseball de Novo!?!?
+
+>-  Mais estatístico dos esportes
+>-  Sabermetrics
+>-  Moneyball
+
+## Análise Bayesiana
+
+-  Depois da minha apresentação da teorema de Bayes
+-  Deixei de falar disso
+-  Boa série de posts num blog mais um novo livro
+   -  Oferece um novo approach a análise Bayesiana
+   -  Baseada em beisebol
+- Esta apresentação uma adaptação do post e do livro
+
+## Blog Post e Livro
+
+- Blog Post: "Understanding empirical Bayes estimation (using baseball statistics)" de David Robinson do blog *Variance Explained*,  10 de outubro 2015
+- Livro: David Robinson, **Introduction to Empirical Bayes: Examples from Baseball Statistics** (San Francisco: Gumroad Pubishers, 2016). Pode obter (de graça) através do site: http://store.varianceexplained.org.
+
+***
+
+![hitter](/Users/jameshunter/Documents/UNIFESP/MAD-CB/at-bat.jpg)
+
+## Empirical Bayes
+
+  - Técnica Bayesiana bem útil para estudos modernos de dados biomédicos.
+    - Microarray, sequenciamento, etc.
+    - Estudos com grandes quantidades de dados
+  - Quando tem muitas observações, só tem uma pequena diferença entre modelos tradicionais Bayesianos e a aproximação de Empirical Bayes (EB)
+  - Quando tem poucas observações, aproximações de EB podem errar
+  - EB um atalho para entender métodos Bayesianos
+    - Métodos Bayesianos tradicionais 
+      - São difíceis a entender
+      - São custosos em termos de tempo de computação
+
+## Data
+
+-  Vamos examinar a média de rebatidas, um índice de habilidade de rebatedores
+-     A habilidade fundamental (?)
+-  Base de dados Lahman 
+-  Tem a historia completa de todos as vezes ao bastão (at-bats) 
+-  Eliminar arremessadores -- rebatedores horríveis
+
+## Nossa Pergunta
+
+> Quem são os melhores rebatedores na historia de beisebol americano?
+
+## Média de Rebatidas
+
+- Número de rebatidas ($H$) dividido pelas vezes ao bastão ($AB$)
+
+$$ BA=\frac{H}{AB}$$
+- Tem muito outras medidas de habilidade de rebatedores, mas esse é a mais tradicional
+- Em MLB, .270 (27%) é considerado uma boa média e .300 excelente
+- Como padrão, pensamos que a maioria das médias ficam entre .210 e .360 para uma temporada
+
+## Distribuição de Rebatidas
+
+  - Rebatidas são exemplos de 'sucessos' de uma distribuição *binomial*
+    - Vezes ao bastão = trials
+  - Guardar na cabeça a pergunta seguinte: Quem é o melhor rebatedor?
+    - José que tem 4 rebatidas em 10 vezes ao bastão?
+    - Pedro que tem 100 rebatidas em 300 vezes ao bastão?
+  - Distribuição *binomial* tem forte relação com a distribuição *beta*
+    - *Beta* é priori conjugada ("conjugate prior") da *binomial*
+
+## Ponto Fundamental da Teorema de Bayes
+
+  - Você pode ter uma estimativa da distribuição e valor da variável antes de medi-la
+    - Priori
+  - Medida dos dados permite que você pode mudar a conclusão sobre valor
+    - Posteriori
+  - Distribuições da Priori e da Posteriori devem ser da mesma família
+  - Como *beta* (priori) e *binomial* (posteriori)
+  
+## Distribuição Beta
+
+  - Tem dois parâmetros: $\alpha$ e $\beta$
+  - Pode assumir formas diferentes baseados nos valores dos parâmetros
+  - Todos as formas têm valores entre 0 e 1
+  - Ideal para análise de probabilidades (ou BA)
+  
+## 
+
+```{r betashapes, echo = FALSE, fig.cap = "The density of the beta distribution for several selected combinations of parameters."}
+
+sim <- data_frame(a = c(1, 3, 50, 20),
+                  b = c(2, 3, 10, 20)) %>%
+  group_by(a, b) %>%
+  do(data_frame(x = seq(0, 1, .001), y = dbeta(x, .$a, .$b))) %>%
+  mutate(Parameters = paste0("alfa = ", a, ", beta = ", b)) %>%
+  ungroup() %>%
+  mutate(Parameters = factor(Parameters, levels = unique(Parameters)))
+
+ggplot(sim, aes(x, y, color = Parameters)) +
+  geom_line() +
+  xlab("Batting average") +
+  ylab("Density of beta")
+```
+
+## Aplicar a Distribuição Beta a Média das Rebatidas
+
+  - Sabemos que os jogadores rebatem no intervalo de .210 - .360
+  - Podemos modelar esta condição com uma distribuição $\mbox{Beta}(81,219)$
+
+```{r setup, echo = FALSE, cache = TRUE}
+sim <- data.frame(a = c(81, 82, 81 + 100),
+                  b = c(219, 219, 219 + 200)) %>%
+  group_by(a, b) %>%
+  do(data_frame(x = seq(0, .5, .001), y = dbeta(x, .$a, .$b))) %>%
+  mutate(Parameters = paste0("alfa = ", a, ", beta = ", b)) %>%
+  ungroup() %>%
+  mutate(Parameters = factor(Parameters, levels = unique(Parameters)))
+```
+
+```{r plot1, dependson = "setup", echo = FALSE}
+sim %>%
+  filter(a == 81) %>%
+  ggplot(aes(x, y, color = Parameters)) +
+  geom_line() +
+  xlab("Batting average") +
+  ylab("Density of beta")
+```
+
+## Quando Uma Temporada Inicia ...
+
+  - O que seria nossa expectativa da BA de um rebatedor?
+    - Que cairia na distribuição das médias do ano anterior
+    - Que estaria a média de desta distribuição
+  - Este é a estimativa *priori* da BA
+  - Média de uma distribuição Beta:
+
+$$ \mu_{\mbox{Beta}}=\frac{\alpha}{\alpha+\beta}=\frac{81}{81+219}=0.270$$
+
+## Atualização
+
+  - Voltaremos ao José e Pedro
+  - Depois de um tempo, queremos determinar a média de rebatidas justa deles
+  - Eles dois começam a temporada com uma expectativa priori de 0.270
+  - Agora temos nova informação sobre cada um:  
+    - José: 4 de 10 (0.400)
+    - Pedro: 100 de 300 (0.333)
+  - Podemos calcular a nova distribuição Beta com a nova informação
+    - Processo de atualização
+    
+##  Formula para Atualização de Beta
+
+$$ \mbox{Beta}(\alpha_o+\mbox{H},\mbox{ }\beta_o +\mbox{(AB - H)})$$
+
+  - Em termos gerais,
+    - $\alpha$ ajustado pelos sucessos
+    - $\beta$ ajustado pelos falhas (ou tentativas menos sucessos)
+  - Para recalcular a média da nova Beta, só precisa substituir os novos valores para $\alpha$ e 
+  $\beta$
+    
+## Quem É Melhor? -- José?
+
+  - BA Posteriori de José
+  
+$$ \mbox{Beta}(81+4,\mbox{ }219+6)=\mbox{Beta}(85,\mbox{ }225)$$
+
+$$\mbox{BA}_{José}=\frac{85}{85+225}=0.2741935$$
+
+## Quem É Melhor? -- Pedro?
+    - BA Posteriori de Pedro
+  
+$$ \mbox{Beta}(81+100,\mbox{ }219+200)=\mbox{Beta}(181,\mbox{ }419)$$
+
+$$\mbox{BA}_{Pedro}=\frac{181}{181+419}=0.3016667$$
+
+## Encolhimento
+
+  - Percebem que as duas BA's agora são menores que a BA "instantâneo" (.400 e .333)
+  - José caiu muito mais: .400 -> .274
+  - Pedro menos: .333 -> .302
+  - Com a distribuição Beta, tem uma regressão à média
+  - Os casos com menos informação (4 de 10) tem regressão maior
+  - Os com mais (100 de 300) tem menos
+  - Formalmente: o processo de mudar nossas estimativas na direção da média
+  
+## Mais Um Experimento com Distribuições Priori e Posteriori
+  
+  - As distribuições conjugadas -- Beta e Binomial
+  - Criamos um universo com 1 milhão de rebatedores que vivem num mundo com uma distribuição priori de rebatidas de $\mbox{Beta}(81,219)$ 
+  - Vamos dar para eles 300 vezes na bastão (como Pedro)
+  - A distribuição Beta dará para nos a média de rebatidas exata
+  - A Binomial contará quantos rebatidas eles conseguem em 300 AB (trials)
+  
+    
+## Código para Simulação
+
+```{r sim1, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+trials <- 10e5
+set.seed(42)
+sims <- data_frame(
+  ba_verd = rbeta(trials, 81, 219), ## priori com beta
+  hits = rbinom(trials, 300, ba_verd) 
+)
+```
+
+## Data_Frame (Tibble) `sims`
+
+```{r sim2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+sims
+```
+
+## Comparação com Pedro (Sr. 100/300)
+
+  - Quantos jogadores teve o mesmo # de rebatidas que Pedro e o que eram as médias deles?
+
+```{r sim3, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+hit_100 <- sims %>%
+           filter(hits == 100)
+med_BA_H100 <- median(hit_100$ba_verd)
+# Histograma
+dens <- function(x) dbeta(x, 81 + 100, 219 + 200)
+h100hist <- ggplot(hit_100, aes(ba_verd)) 
+h100hist <- h100hist + geom_histogram(aes(y = ..density..), bins = 30) 
+h100hist <- h100hist + stat_function(color = "red", fun = dens) 
+h100hist <- h100hist + 
+  labs(x = "Média de rebatidas dos jogadores com 100 H / 300 AB")
+h100hist <- h100hist + labs(y = "Densidade")
+h100hist <- h100hist + geom_vline(aes(xintercept = med_BA_H100), color = "blue")
+```
+
+## Histograma
+
+```{r sim4, echo = FALSE, mysize=TRUE, size='\\scriptsize'}
+h100hist
+```
+
+## Valor Mediana dos Rebatedores com 100 Rebatidas
+
+  - Valor mediana = `r round(med_BA_H100, 3)`
+  - Valor do Pedro = `r round(0.3016667, 3)`
+  
+## O Que Está Fazendo a Atualização Bayesiana?
+
+  - Responde a pergunta: baseado na informação apriori, qual tipo de rebatedor consegue 100 rebatidas?
+  - Ou, em termos gerais: 
+    - Baseado na informação apriori, qual tipo de caso conseguiria esses resultados?
+    
+## Caso de Rebatedores com 60 ou 80 Rebatidas Invés de 100
+
+```{r sim5, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+hist2 <- sims %>%
+  filter(hits %in% c(60, 80, 100)) %>%
+  ggplot(aes(ba_verd, color = factor(hits))) +
+  geom_density() +
+  labs(x = "Média de rebatidas dos jogadores com H rebatidas / 300 AB",
+       color = "Rebatidas") +
+  labs(y = "Densidade")
+```
+
+##
+
+```{r sim6, echo = FALSE, mysize=TRUE, size='\\scriptsize'}
+hist2
+```
+
+## Resultado da Simulação
+
+  - Forma das distribuições posteriori são parecidas
+  - Deslocam para refletir a nova evidência
+  - Análise Bayesiana coloca os dados sob estudo no contexto da toda a historia da fenomena sendo investigado
+  - VSS: Pode ficar enganado pela incerteza quando tem poucos dados (4 de 10)
+  
+## Método Empirical Bayes
+
+  - Na simulação, aprendemos de usar a distribuição Beta para representar suas expectativas apriori
+  - Usar atualização com nova evidência para fazer sua estimativa mais precisa
+  - Com Empirical Bayes, vamos estender este conceito para usar a distribuição Beta sobre todos os dados para melhorar cada observação
+  
+## Back to Baseball -- Quem É o Melhor Rebatedor desde 1890?
+
+  - Extrair e limpar os dados de Lahman base de dados de rebatidas
+  - Tirar arremessadores da base 
+
+## Preparação dos Dados -- 1
+
+```{r prep1, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+carreira <- Batting %>%
+   filter(AB > 0 & yearID > 1890) %>%
+   anti_join(Pitching, by = "playerID") %>%
+   group_by(playerID) %>%
+   summarize(H = sum(H), AB = sum(AB)) %>%
+   mutate(average = H / AB)
+```
+
+## Preparação dos Dados -- 2 -- Incluir Nomes
+
+```{r prep2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+carreira <- Master %>%
+   tbl_df() %>%
+   select(playerID, nameFirst, nameLast, finalGame) %>%
+   unite(name, nameFirst, nameLast, sep = " ") %>%
+   inner_join(carreira, by = "playerID") %>%
+   mutate(finalYear = substr(finalGame, 1, 4)) %>%  select(-finalGame)
+```
+
+## Exploração dos Dados -- 1
+
+```{r ex1, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+carreira
+```
+
+## Exploração dos Dados -- 2 -- Quem São os Melhores?
+```{r ex2, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+head(arrange(carreira, desc(average)),10)
+```
+
+## Jeff Bannister -- Acho que Não
+
+>- Atual treinador de Texas Rangers
+>- 1 AB em 1991
+>- Conseguiu uma rebatida
+>- Único jogo para os Pirates nos major leagues
+>- **Sortudo**
+
+## Refinar os Dados
+
+>- Os dados podem refletir melhor jogadores com carreiras longas
+>- Um rebatedor que joga uma temporada inteira teria > 300 ABs 
+>- Revisar nosso data_frame para ter um mínimo de 300 AB's
+
+## Código para a Revisão dos Dados
+
+```{r prep3, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+carrfiltrado <- carreira %>% filter(AB >= 300)
+head(carrfiltrado)
+```
+
+## Histograma da Distribuição das Médias de Rebatidas
+
+```{r echo=FALSE}
+empavg <- mean(carrfiltrado$average)
+hist(carrfiltrado$average, breaks = 20, 
+     xlab = "Média", main = "Histograma das Médias de Rebatidas", 
+     col = "grey")
+text(0.315, 500, 
+     paste0("Média = ",round(empavg,3)))
+abline(v = mean(carrfiltrado$average), col = "red", lwd = 2)
+grid(col = "darkgray")
+
+```
+
+## Passo 1 de Empirical Bayes: Estimar Uma apriori Usando Todos os Dados
+
+  - Uma método Bayesiana pura estimaria uma distribuição priori usando outra informação, não dados
+  - Empirical Bayes é uma aproximação aos métodos Bayesianos mais ortodoxos
+  - Queremos determinar a distribuição Beta que replica esses dados
+    - Um novo $\alpha_0$ e $\beta_0$
+    - Os *hiperparâmetros* de nosso modelo
+$$X\sim\mbox{Beta}(\alpha_0,\beta_0)$$
+
+##  Pode Escolher Os Hiperparâmetros com Probabilidade Máxima
+
+  - Probabilidade máxima = maximum likelihood
+  - Método para achar os parâmetros para maximizar a probabilidade de gerar a distribuição empírica
+  - Porque estamos usando as distribuições Beta e Binomial
+    - Usaremos a distribuição `betabinom` para calcular a probabilidade máxima
+    - Vem do pacote `VGAM` (que deveria ter no seu computador)
+  - Função para maximizar a probabilidade é `mle` que faz parte do pacote `stats4`
+    -  Um grupo das funções programado num outra sub-sistema de R chamado `S4`
+
+## Calculo de $\alpha_0$ e $\beta_0$
+
+```{r mle, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+# log-likelihood function
+ll <- function(alpha, beta) {
+  x <- carrfiltrado$H
+  total <- carrfiltrado$AB
+  -sum(VGAM::dbetabinom.ab(x, total, alpha, beta, log = TRUE))
+}
+# maximum likelihood estimation
+m <- mle(ll, start = list(alpha = 1, beta = 10), method = "L-BFGS-B",
+                 lower = c(0.0001, .1))
+ab <- coef(m)
+alpha0 <- ab[1]
+beta0 <- ab[2]
+```
+
+## Novos Hiperparâmetros
+
+  - $\alpha$ = `r round(alpha0, 3)`; $\beta$ = `r round(beta0, 3)`
+```{r histogrambeta, echo = FALSE}
+carrfiltrado %>%
+  ggplot() +
+  geom_histogram(aes(average, y = ..density..), binwidth = .005) +
+  stat_function(fun = function(x) dbeta(x, alpha0, beta0), color = "red",
+                size = 1) +
+  xlab("Batting average")
+```
+
+## Parece Mais como Beisebol Verdadeiro
+
+- Replica bem os dados
+- Média histórica de `r round(mean(carrfiltrado$average),3)`
+- Começamos com `r nrow(carreira)` jogadores
+- Agora: `r nrow(carrfiltrado)` jogadores com um mínimo de 300 AB's
+- Redução de `r round(100 * abs((nrow(carrfiltrado) - nrow(carreira))/nrow(carreira)), 2)` porcentagem
+
+## Passo 2 -- Use a Nova Distribuição como Priori para Cada Rebatedor
+
+  - Mesmo processo que fizemos com a simulação anterior
+  - Estimar a média de todos os individuais 
+    - Começar com priori universal
+    - Fazer a atualização baseado no desempenho de cada jogador
+  - Chamaremos esta estimativa a "estimativa de empirical Bayes" (*EEB*)
+  -  Formula:
+$$ EEB=\frac{H + \alpha}{AB + \alpha + \beta} $$  
+  
+```{r ebb, echo = TRUE, mysize=TRUE, size='\\scriptsize'}
+ebb <- carreira %>%
+  mutate(eb_est = (H + alpha0) / (AB + alpha0 + beta0))
+```
+
+
+## Nova Lista dos Melhores Rebatedores
+```{r ex3, echo = TRUE, mysize=TRUE, size='\\tiny'}
+showebb <- ebb %>% 
+  select(-playerID) %>% 
+  arrange(desc(eb_est)) %>% 
+  slice(1:10)
+```
+
+##
+```{r showebb, echo = FALSE}
+kable(showebb, caption = "Melhores Rebatedores por EBB")
+```
+
+## Comentários
+
+-  Rogers Hornsby geralmente considerado o melhor rebatedor na historia do beisebol
+-  Ed Delahanty produto de Seculo 19 -- desfecho interessante na carreira (e vida)
+-  Shoeless Joe Jackson podia ter ido para cima ou para baixo 
+    - Mandado embora do beisebol depois de escândalo "Black Sox" de 1919
+-  Único jogador moderno na lista - Tony Gwynn, aposentado em 2001
+-  Omissão interessante da lista: Ted Williams
+  -  Último jogador para rebater 0.400 (1952 e 1953)
+  -  "Cientista" de rebater - o "Perfesser"
+  
+## Rogers Hornsby
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/rogers-hornsby.jpg)
+
+## "Big" Ed Delahanty
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/ed_delahanty.jpg)
+
+## Shoeless Joe Jackson
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/joe_jackson.jpg)
+
+## Resultado de Empirical Bayes
+
+  - Mudou as médias de todos os jogadores
+  - Scatter plot mostra as mudanças
+  
+## Código para Scatter Plot
+
+```{r ebestimatescatter, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+ebscat <- ggplot(ebb, aes(average, 
+                          eb_est, color = AB)) +
+  geom_hline(yintercept = alpha0 / (alpha0 + beta0), 
+             color = "red", lty = 2) +
+  geom_point() +
+  geom_abline(color = "red") +
+  scale_colour_gradient(trans = "log", breaks = 10 ^ (1:5)) +
+  xlab("Média de Rebatidas") +
+  ylab("Média de Rebatidas - Empirical Bayes ")
+```
+
+## 
+
+```{r printscat, echo = FALSE}
+ebscat
+```
+
+## Como Interpretar o Gráfico
+
+  - A linha vermelha tracejada é a média apriori $y=\frac{\alpha_0}{\alpha_0 + \beta_0}=`r sprintf("%.3f", alpha0 / (alpha0 + beta0))`$
+  - A linha vermelha solida mostra onde $x=y$
+  - Os pontos mais claros são mais próximos à linha $xy$
+    - Eles são os rebatedores com mais informação, mais ABs
+    - Eles sofrem encolhimento muito menor
+  - Os pontos mais escuras são aqueles com poucos ABs (como Jeff Bannister)
+    - Eles sofrem muito mais encolhimento que os rebatedores com experiência
+    
+## Limitações deste Modelo
+
+-  Nosso experimento assume que rebater em beisebol sempre teve as mesmas restrições, regras, e parâmetros
+-  Beisebol está sempre evoluindo, regras e equipamentos mudando
+-  Condicionamento dos jogadores muito diferente do que até 30 anos atrás
+-  Tivemos a época da bola morta-- "dead ball", época de expansão, época de PEDs, época de arremessadores com velocidade fenomenal
+-  Podemos considerar as médias de rebatidas por década, podemos ver que estimativas precisam ser ajustadas para tomar conta dessas diferenças.
+
+## Data Frame das Decadas
+
+```{r dec, echo = TRUE, mysize=TRUE, size='\\footnotesize'}
+decadas <- Batting %>% mutate(decada = floor(yearID/10)*10) %>%
+   mutate(Average = H / AB) %>%
+   filter(AB > 300)
+```
+
+## Graph of Batting through the Decades
+```{r echo=FALSE}
+decadebox <- ggplot(decadas, aes(x = factor(decada), y = Average))
+decadebox <- decadebox + geom_boxplot()
+decadebox <- decadebox + labs(title = "Média de Rebatidas por Década", 
+                              x = "Década", y = "Média")
+decadebox
+```
+  
+## Modelos Hierarquicos Bayesianos
+
+  - Esta questão de década pode ser tratado por um modelo Empirical Bayes mais sofisticado
+  - Modelos desenvolvidos em sequência
+  - Frequentemente usados no estudo de regulação epigenética da expressão genética
+
+
+## Recommendação Final
+
+  - Curso de MIT - The Analytics Edge MIT 15.071x
+    - Próxima sessão começa 06/06/17
+    - <https://www.edx.org/course/analytics-edge-mitx-15-071x-3>
+    - $*****$ Eu fiz; amei
+    
+##
+
+![](/Users/jameshunter/Documents/UNIFESP/MAD-CB/thatsallfolks.jpg)
